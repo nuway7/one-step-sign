@@ -5,8 +5,10 @@ import { api, booth, queue, ApiError } from './api.js';
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const params = new URLSearchParams(location.search);
-const MODE = ['display', 'kiosk'].includes(params.get('mode')) ? params.get('mode') : 'all';
+const MODE = ['display', 'kiosk', 'booth'].includes(params.get('mode')) ? params.get('mode') : 'all';
 document.body.classList.add('mode-' + MODE, 'backend-' + api.kind);
+// 부스 모드: 모니터 한 대에 방명록 + 게임 소개 영상
+if (MODE === 'booth') import('./video.js').then((m) => m.startVideo());
 
 const cfg = await api.config();
 $('#nameInput').maxLength = cfg.maxName;

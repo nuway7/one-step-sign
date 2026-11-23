@@ -242,14 +242,17 @@ export class Scene {
     this.sparkles = [];
     this.groupDir = null; this.groupUntil = 0;
 
+    // 장면이 들어갈 상자 (전체 화면, 또는 부스 모드에서 영상 옆 영역)
+    this.host = canvas.parentElement;
     this.resize();
     window.addEventListener('resize', () => this.resize());
+    if (window.ResizeObserver) new ResizeObserver(() => this.resize()).observe(this.host);
     layer.addEventListener('pointerdown', (e) => this.handleTap(e));
     requestAnimationFrame((t) => this.loop(t));
   }
 
   resize() {
-    const vw = window.innerWidth, vh = window.innerHeight;
+    const vw = this.host.clientWidth || window.innerWidth, vh = this.host.clientHeight || window.innerHeight;
     // 정수 배율이 가능하면 정수로, 화면이 작으면 소수 배율
     let s = Math.min(vw / W, vh / H);
     if (s >= 2) s = Math.floor(s * 2) / 2;

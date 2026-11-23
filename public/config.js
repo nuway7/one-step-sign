@@ -11,6 +11,13 @@
 export const SUPABASE_URL = 'https://qycflcpgemnbjjjiebpo.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_Vp5VkLXbZ4khSJxAdSftWw_sB0toaRj';
 
+// 부스 모드(?mode=booth): 모니터 한 대에 방명록 + 게임 소개 영상을 함께 띄워요.
+export const VIDEO = {
+  src: 'assets/intro.mp4', // 세로 영상 파일
+  side: 'right',           // 'right' 또는 'left'
+  sound: false,            // true 면 소리 켜기 (브라우저가 막으면 첫 터치 때 켜져요)
+};
+
 export const LIMITS = {
   maxName: 10,          // 이름 최대 글자 수 (DB 설정과 맞춰 주세요)
   maxMessage: 80,       // 방명록 최대 글자 수

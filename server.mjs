@@ -59,7 +59,7 @@ const publicEntry = (e) => ({ id: e.id, n: e.n, name: e.name, msg: e.msg, look: 
 // ---------- HTTP ----------
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+  '.json': 'application/json; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.mp4': 'video/mp4', '.webm': 'video/webm',
 };
 
 function send(res, code, body, headers = {}) {
@@ -135,9 +135,25 @@ const server = http.createServer(async (req, res) => {
     let rel = decodeURIComponent(p === '/' ? '/index.html' : p);
     const file = path.normalize(path.join(PUBLIC, rel));
     if (!file.startsWith(PUBLIC + path.sep)) return send(res, 403, 'Forbidden');
-    fs.readFile(file, (err, buf) => {
-      if (err) return send(res, 404, 'Not Found');
-      send(res, 200, buf, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
+    fs.stat(file, (err, st) => {
+      if (err || !st.isFile()) return send(res, 404, 'Not Found');
+      const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
+      const base = { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Last-Modified': st.mtime.toUTCString(), 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' };
+      // 영상은 브라우저가 부분(Range)으로 나눠 달라고 해요
+      const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+      if (m && (m[1] || m[2])) {
+        let start = m[1] ? Number(m[1]) : st.size - Number(m[2]);
+        let end = m[1] && m[2] ? Number(m[2]) : st.size - 1;
+        if (start < 0) start = 0;
+        if (start >= st.size || end < start) { res.writeHead(416, { 'Content-Range': `bytes */${st.size}` }); return res.end(); }
+        end = Math.min(end, st.size - 1);
+        res.writeHead(206, { ...base, 'Content-Length': end - start + 1, 'Content-Range': `bytes ${start}-${end}/${st.size}` });
+        if (req.method === 'HEAD') return res.end();
+        return fs.createReadStream(file, { start, end }).pipe(res);
+      }
+      res.writeHead(200, { ...base, 'Content-Length': st.size });
+      if (req.method === 'HEAD') return res.end();
+      fs.createReadStream(file).pipe(res);
     });
   } catch (err) {
     send(res, 400, { error: '요청을 처리하지 못했어요.' });

@@ -9,6 +9,11 @@
 <body>
   <!-- 공간 화면 -->
   <section id="space">
+    <header class="booth-head">
+      <img src="assets/logo.webp" alt="한 칸만 옮겼는데">
+      <div class="booth-copy"><b>졸업전시 방명록</b><span>캐릭터를 만들고 한 마디 남기면, 사무실에 출근해요!</span></div>
+    </header>
+    <div id="stage">
     <canvas id="world"></canvas>
     <div id="layer">
       <button id="adminHit" aria-label="관리자"></button>
@@ -22,10 +27,17 @@
         <span>첫 번째 방명록의 주인공이 되어 주세요!</span>
       </div>
     </div>
+    </div>
     <div id="toast" class="toast"></div>
     <div id="groupBanner" class="group-banner"><span class="arrow" id="groupArrow">→</span> 모두 함께 한 칸 이동!</div>
     <button id="joinBtn" class="join-btn"><span class="ic">✎</span> 방명록 남기고 출근하기</button>
   </section>
+
+  <!-- 부스 모드: 게임 소개 영상 -->
+  <aside id="videoPane" hidden>
+    <video id="introVideo" muted loop playsinline autoplay preload="auto" disablepictureinpicture></video>
+    <div class="video-tag">▶ PLAY</div>
+  </aside>
 
   <!-- 참여 흐름 -->
   <section id="flow" class="hidden">
