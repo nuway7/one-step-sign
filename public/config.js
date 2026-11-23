@@ -8,8 +8,8 @@
 // 두 값을 비워 두면 노트북 서버(node server.mjs) 모드로 동작해요.
 // 주소 뒤에 ?backend=local 을 붙여도 노트북 서버 모드로 바뀌어요.
 
-export const SUPABASE_URL = '';
-export const SUPABASE_ANON_KEY = '';
+export const SUPABASE_URL = 'https://qycflcpgemnbjjjiebpo.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_Vp5VkLXbZ4khSJxAdSftWw_sB0toaRj';
 
 export const LIMITS = {
   maxName: 10,          // 이름 최대 글자 수 (DB 설정과 맞춰 주세요)
