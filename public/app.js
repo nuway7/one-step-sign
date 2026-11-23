@@ -294,13 +294,18 @@ if (MODE === 'kiosk') openFlow('start');
 
 // ================= 관리자 =================
 // 공간 화면: 왼쪽 위 W 아이콘 / 태블릿: 왼쪽 위 모서리를 3초 안에 5번
-let taps = [];
+// 터치 기기는 손가락을 뗀 뒤 "클릭"을 한 번 더 보내요. 누르는 순간(pointerdown)에 창을 열면
+// 그 클릭이 방금 열린 창의 배경에 떨어져서 창이 바로 닫혀요. 그래서 클릭이 끝난 뒤에 세고 열어요.
+let taps = [], adminOpenedAt = 0;
+const adminVisible = () => !$('#admin').classList.contains('hidden');
 function countTap() {
+  if (adminVisible()) return;
   const now = Date.now(); taps = taps.filter((t) => now - t < 3000); taps.push(now);
   if (taps.length >= 5) { taps = []; openAdmin(); }
 }
-$('#adminHit').addEventListener('pointerdown', (e) => { e.stopPropagation(); countTap(); });
-addEventListener('pointerdown', (e) => {
+$('#adminHit').addEventListener('pointerdown', (e) => e.stopPropagation()); // 캐릭터 터치로 번지지 않게
+$('#adminHit').addEventListener('click', (e) => { e.stopPropagation(); countTap(); });
+addEventListener('click', (e) => {
   if (MODE !== 'kiosk' || e.clientX > 70 || e.clientY > 70) return;
   countTap();
 });
@@ -311,6 +316,7 @@ $('#boothPane').classList.toggle('hidden', isLocal);
 $('#loginPane').classList.toggle('hidden', isLocal);
 
 function openAdmin() {
+  adminOpenedAt = Date.now();
   pin = ''; drawPin(); $('#pinErr').textContent = '';
   $('#boothInput').value = '';
   $('#boothState').textContent = booth.code ? '✓ 이 기기는 부스로 등록되어 있어요.' : '아직 등록되지 않은 기기예요.';
@@ -397,7 +403,11 @@ function renderAdmin(list) {
     row.append(no, t, btn); box.append(row);
   }
 }
-$('#admin').addEventListener('click', (e) => { if (e.target.closest('[data-aclose]') || e.target.id === 'admin') $('#admin').classList.add('hidden'); });
+$('#admin').addEventListener('click', (e) => {
+  if (e.target.closest('[data-aclose]')) return $('#admin').classList.add('hidden');
+  // 배경 터치로 닫기: 열린 직후 0.6초 동안은 무시 (남은 터치가 닫지 않게)
+  if (e.target.id === 'admin' && Date.now() - adminOpenedAt > 600) $('#admin').classList.add('hidden');
+});
 $('#fsBtn').addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {}); });
 $('#reloadBtn').addEventListener('click', () => location.reload());
 

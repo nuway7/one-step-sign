@@ -16,7 +16,7 @@ button { font-family: var(--font); cursor: pointer; touch-action: manipulation; 
 #world, #layer { position: absolute; image-rendering: pixelated; image-rendering: crisp-edges; }
 #layer { --s: 4; overflow: hidden; }
 .L { position: absolute; }
-#adminHit { position: absolute; left: 0; top: 0; width: calc(16px * var(--s)); height: calc(14px * var(--s)); background: transparent; border: 0; z-index: 5; }
+#adminHit { position: absolute; left: 0; top: 0; width: max(calc(16px * var(--s)), 48px); height: max(calc(14px * var(--s)), 48px); background: transparent; border: 0; z-index: 5; }
 .title-text { position: absolute; left: 0; right: 0; top: 0; height: calc(14px * var(--s)); line-height: calc(14px * var(--s));
   text-align: center; color: #fff; font-size: calc(6.2px * var(--s)); font-weight: 600; pointer-events: none; }
 .tabs { position: absolute; left: calc(10px * var(--s)); right: calc(10px * var(--s)); top: calc(14.5px * var(--s)); height: calc(9px * var(--s));
