@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>캐릭터 부품 시트</title>
+<style>
+  body { margin: 0; padding: 24px; background: #eef2fa; font-family: "Malgun Gothic", sans-serif; color: #1f2a4d; }
+  h2 { margin: 22px 0 10px; font-size: 20px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; }
+  figure { margin: 0; background: #fff; border: 2px solid #d5ddef; border-radius: 10px; padding: 8px; text-align: center; font-size: 13px; }
+  canvas { image-rendering: pixelated; display: block; }
+  .floor { background: linear-gradient(#e6ebf5 1px, transparent 1px) 0 0 / 16px 16px, linear-gradient(90deg, #e6ebf5 1px, transparent 1px) 0 0 / 16px 16px, #fff; }
+</style>
+</head>
+<body>
+<h1>한 칸만 옮겼는데 · 캐릭터 부품 시트</h1>
+<div id="out"></div>
+<script type="module">
+import { PART_LISTS, DEFAULT_LOOK, paintLook } from './sprites.js';
+const out = document.getElementById('out');
+function section(title, items) {
+  const h = document.createElement('h2'); h.textContent = title; out.append(h);
+  const row = document.createElement('div'); row.className = 'row'; out.append(row);
+  for (const { look, label, expr, frame, scale = 6, floor } of items) {
+    const f = document.createElement('figure'); if (floor) f.classList.add('floor');
+    const c = document.createElement('canvas'); paintLook(c, look, { scale, expr, frame });
+    const cap = document.createElement('figcaption'); cap.textContent = label;
+    f.append(c, cap); row.append(f);
+  }
+}
+const base = { ...DEFAULT_LOOK };
+const titles = { hair: '헤어', hairColor: '헤어 색', acc: '액세서리', outfit: '의상', skin: '피부' };
+for (const key of Object.keys(PART_LISTS)) section(titles[key], PART_LISTS[key].map((p) => ({ look: { ...base, [key]: p.id }, label: p.name })));
+section('표정 · 걷기', [
+  ['normal', 0, '기본'], ['blink', 0, '눈 깜빡'], ['happy', 0, '웃음'], ['oops', 0, '움찔'], ['normal', 1, '걷기 1'], ['normal', 2, '걷기 2'],
+].map(([expr, frame, label]) => ({ look: base, expr, frame, label })));
+const mixes = [
+  { hair: 'curly', hairColor: 'dark', acc: 'glasses', outfit: 'cardigan', skin: 'mid' },
+  { hair: 'bob', hairColor: 'brown', acc: 'headphone', outfit: 'hoodie', skin: 'light' },
+  { hair: 'blunt', hairColor: 'pink', acc: 'cat', outfit: 'coral', skin: 'light' },
+  { hair: 'crop', hairColor: 'charcoal', acc: 'cap', outfit: 'field', skin: 'tan' },
+  { hair: 'pony', hairColor: 'brown', acc: 'ribbon', outfit: 'white', skin: 'light' },
+  { hair: 'slick', hairColor: 'charcoal', acc: 'glasses', outfit: 'casual', skin: 'deep' },
+  { hair: 'short', hairColor: 'blonde', acc: 'postit', outfit: 'lemon', skin: 'mid' },
+  { hair: 'twoblock', hairColor: 'ash', acc: 'none', outfit: 'suit', skin: 'tan' },
+];
+section('조합 예시', mixes.map((look, i) => ({ look, label: '조합 ' + (i + 1) })));
+section('실제 화면 크기 (바닥 위, 4배)', mixes.map((look, i) => ({ look, label: '', scale: 4, floor: true })));
+</script>
+</body>
+</html>

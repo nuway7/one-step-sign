@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>한 칸만 옮겼는데 · 방명록</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 공간 화면 -->
+  <section id="space">
+    <canvas id="world"></canvas>
+    <div id="layer">
+      <button id="adminHit" aria-label="관리자"></button>
+      <div class="title-text">방명록.docx · 한 칸만 옮겼는데</div>
+      <div class="tabs"><span>파일</span><span class="on">홈</span><span>삽입</span><span>그리기</span><span>디자인</span><span>레이아웃</span><span>참조</span><span>검토</span><span>보기</span><span class="font">맑은 고딕 · 11</span></div>
+      <div class="door-sign">OUT</div>
+      <div class="status-text"><span>1/1 페이지</span><span id="stCount">방명록 0개</span><span id="stNow">지금 출근 0명</span><span id="stMode"></span></div>
+      <div class="zoom-text">100%</div>
+      <div id="empty" class="empty hidden">
+        <b>아직 아무도 출근하지 않았어요</b>
+        <span>첫 번째 방명록의 주인공이 되어 주세요!</span>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <div id="groupBanner" class="group-banner"><span class="arrow" id="groupArrow">→</span> 모두 함께 한 칸 이동!</div>
+    <button id="joinBtn" class="join-btn"><span class="ic">✎</span> 방명록 남기고 출근하기</button>
+  </section>
+
+  <!-- 참여 흐름 -->
+  <section id="flow" class="hidden">
+    <div class="flow-bg"></div>
+
+    <!-- 0. 시작 -->
+    <div class="step" data-step="start">
+      <img class="logo" src="assets/logo.webp" alt="한 칸만 옮겼는데">
+      <p class="lead">작은 한 칸이 만드는 큰 변화!<br>캐릭터를 만들고 방명록을 남기면 사무실에 출근해요.</p>
+      <button class="btn big primary" data-go="look" id="startBtn">출근 준비 시작하기</button>
+      <p class="notice" id="startNotice">남긴 캐릭터와 글은 졸업전시 기록으로 공개돼요. 이름은 비워 두면 익명이에요.</p>
+      <p class="notice warn hidden" id="lockedNotice">이 기기는 아직 부스로 등록되지 않았어요.<br>관리자 메뉴에서 부스 코드를 등록해 주세요.</p>
+      <button class="btn ghost" data-close>공간 보기</button>
+    </div>
+
+    <!-- 1. 옷장 -->
+    <div class="step" data-step="look">
+      <header class="stage-head"><button class="back" data-back>←</button><div class="stage-tag">STAGE 1-1</div><h2>옷장 · 출근 준비</h2><div class="dots"><i class="on"></i><i></i><i></i></div></header>
+      <div class="wardrobe">
+        <div class="fitting">
+          <div class="rack"></div>
+          <canvas id="bigPreview"></canvas>
+          <div class="pedestal"></div>
+          <button class="btn small" id="randomBtn">🎲 랜덤</button>
+        </div>
+        <div class="closet">
+          <div class="ctabs" id="ctabs"></div>
+          <div class="options" id="options"></div>
+        </div>
+      </div>
+      <footer class="step-foot"><button class="btn big primary" data-go="name">이 모습으로 출근</button></footer>
+    </div>
+
+    <!-- 2. 사원증 -->
+    <div class="step" data-step="name">
+      <header class="stage-head"><button class="back" data-back>←</button><div class="stage-tag">STAGE 1-2</div><h2>사원증 만들기</h2><div class="dots"><i class="on"></i><i class="on"></i><i></i></div></header>
+      <div class="badge-wrap">
+        <div class="lanyard"></div>
+        <div class="badge">
+          <div class="badge-top">한 칸 컴퍼니 · 신입사원</div>
+          <canvas id="badgeFace"></canvas>
+          <input id="nameInput" maxlength="10" autocomplete="off" placeholder="이름 (비워 두면 익명)">
+          <div class="badge-bar"></div>
+        </div>
+      </div>
+      <div class="chips" id="nameChips"></div>
+      <footer class="step-foot"><button class="btn big primary" data-go="msg">사원증 발급</button></footer>
+    </div>
+
+    <!-- 3. 방명록 -->
+    <div class="step" data-step="msg">
+      <header class="stage-head"><button class="back" data-back>←</button><div class="stage-tag">STAGE 1-3</div><h2>방명록 작성</h2><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></div></header>
+      <div class="doc">
+        <div class="doc-title"><b>W</b> 방명록.docx</div>
+        <div class="doc-ribbon"><span>B</span><span><i>I</i></span><span><u>U</u></span><em>맑은 고딕</em><em>11</em></div>
+        <div class="doc-page">
+          <canvas id="docFace"></canvas>
+          <textarea id="msgInput" maxlength="80" placeholder="전시를 보고 한 마디 남겨 주세요"></textarea>
+        </div>
+        <div class="doc-status"><span id="msgCount">0 / 80자</span><span id="msgWords">0개 단어</span></div>
+      </div>
+      <div class="chips" id="msgChips"></div>
+      <p class="err" id="err"></p>
+      <footer class="step-foot"><button class="btn big primary" id="submitBtn">제출하고 출근하기</button></footer>
+    </div>
+
+    <!-- 4. 완료 -->
+    <div class="step" data-step="done">
+      <canvas id="doneFace"></canvas>
+      <h2 class="done-title">출근 완료!</h2>
+      <p class="lead" id="doneText">사무실 화면에서 내 캐릭터를 찾아보세요.</p>
+      <button class="btn big primary" data-close id="doneBtn">확인</button>
+    </div>
+  </section>
+
+  <!-- 방명록 보기 -->
+  <div id="viewer" class="modal hidden">
+    <div class="doc viewer-doc">
+      <div class="doc-title"><b>W</b> <span id="vTitle">방명록.docx</span><button class="x" data-vclose>✕</button></div>
+      <div class="doc-page">
+        <canvas id="vFace"></canvas>
+        <div class="v-meta"><b id="vName"></b><span id="vInfo"></span></div>
+        <p id="vMsg"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 관리자 -->
+  <div id="admin" class="modal hidden">
+    <div class="admin-card">
+      <div class="admin-head"><b>관리자</b><button class="x" data-aclose>✕</button></div>
+      <div id="authPane">
+        <!-- 노트북 서버 모드: PIN -->
+        <div id="pinPane">
+          <div class="pin-dots" id="pinDots"></div>
+          <div class="keypad" id="keypad"></div>
+        </div>
+        <!-- Supabase 모드: 부스 등록 + 관리자 로그인 -->
+        <div id="boothPane" class="admin-box">
+          <b>이 기기를 부스로 등록</b>
+          <p class="hint">부스 코드를 아는 기기에서만 방명록을 쓸 수 있어요. 코드는 이 기기에만 저장돼요.</p>
+          <div class="field-row"><input id="boothInput" type="password" autocomplete="off" placeholder="부스 코드"><button class="btn small" id="boothSave">등록</button></div>
+          <p class="state" id="boothState"></p>
+          <button class="btn small ghost" id="boothClear">이 기기 등록 해제</button>
+        </div>
+        <form id="loginPane" class="admin-box" autocomplete="on">
+          <b>관리자 로그인</b>
+          <p class="hint">글 숨기기는 Supabase에 등록한 관리자 계정만 할 수 있어요.</p>
+          <input id="loginEmail" type="email" autocomplete="username" placeholder="이메일">
+          <input id="loginPw" type="password" autocomplete="current-password" placeholder="비밀번호">
+          <button class="btn small primary" type="submit">로그인</button>
+        </form>
+        <p class="err" id="pinErr"></p>
+      </div>
+      <div id="adminPane" class="hidden">
+        <div class="admin-tools">
+          <button class="btn small" id="fsBtn">전체 화면</button>
+          <button class="btn small" id="reloadBtn">새로고침</button>
+          <span id="adminCount"></span>
+        </div>
+        <div class="admin-list" id="adminList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

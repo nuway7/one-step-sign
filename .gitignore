@@ -1,0 +1,12 @@
+# 노트북 서버 모드의 방명록 데이터와 관리자 PIN
+data/
+config.json
+
+# 로컬 도구 설정
+.claude/
+.env
+.env.*
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
