@@ -63,6 +63,19 @@ GitHub Pages (public/)                  Supabase
 - 영상 파일을 바꾸면 다음에 켤 때 자동으로 새로 받아요.
 - 소리를 켜려면 `sound: true`로 바꾸세요. 브라우저가 소리 자동 재생을 막으면 화면을 처음 터치할 때 소리가 켜져요. 크롬을 `--autoplay-policy=no-user-gesture-required` 옵션으로 실행하면 처음부터 소리가 나요.
 
+## 축하 화환 (방문하지 못한 분들용, `/wreath/`)
+
+전시장에 오지 못한 분들이 화환을 꾸며 보내는 별도 방명록이에요. 방명록 사무실과는 **데이터도 공간도 따로**예요.
+
+- 주소: `https://<아이디>.github.io/one-step-sign/wreath/`
+- 공간: '한 칸 컴퍼니' 1층 로비. 빨간 카펫 양옆으로 화환이 줄지어 서고, 새 화환은 입구 문에서 배달돼요. 자리보다 화환이 많으면 14초마다 돌아가며 보여 줘요.
+- 꾸미기: 모양(원형·2단·하트), 꽃 색, 가운데 꽃, 리본 색, 장식(큰 리본·풍선·별·문서 상자). 왼쪽 리본에 축하 문구, 오른쪽 리본에 보내는 사람, 축하 카드(선택).
+- 누구나 보낼 수 있어요. 대신 DB가 금지어, 글자 수, 전체 1분당 10개 제한을 검사해요.
+- 관리자: 머리글 로고를 3초 안에 5번 누르고, 방명록과 같은 관리자 계정으로 로그인하면 숨길 수 있어요.
+- 휴대폰 세로 화면에 맞춰 로비가 세로로 길어져요.
+
+**처음 한 번:** Supabase SQL Editor에서 [`supabase/wreath.sql`](supabase/wreath.sql)을 실행해야 화환을 받을 수 있어요(`schema.sql`을 먼저 실행한 상태여야 해요).
+
 ## 노트북 한 대로 실행 (인터넷 없이)
 
 `public/config.js`의 Supabase 값을 비우거나 주소에 `?backend=local`을 붙이면 로컬 서버 모드로 동작해요. Node.js 18 이상이 필요하고, 따로 설치할 패키지는 없어요.
@@ -72,7 +85,7 @@ node server.mjs        # 또는 start.bat
 ```
 
 - 관리자 PIN은 `config.json`에 있어요. `config.example.json`을 복사해서 만들고 PIN을 바꾸세요. `config.json`과 `data/`는 깃허브에 올라가지 않아요.
-- 방명록은 `data/entries.json`에 저장돼요.
+- 방명록은 `data/entries.json`, 축하 화환은 `data/wreaths.json`에 저장돼요. 화환 페이지는 `http://localhost:4327/wreath/?backend=local`로 열어요.
 
 ## 전시가 끝난 뒤 (포트폴리오 보관)
 

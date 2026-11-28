@@ -11,6 +11,7 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
 const DATA_DIR = path.join(ROOT, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'entries.json');
+const WREATH_FILE = path.join(DATA_DIR, 'wreaths.json');
 
 // config.json (PIN이 들어 있어 깃허브에 올리지 않아요) 이 없으면 예시 파일을 써요
 const configFile = fs.existsSync(path.join(ROOT, 'config.json')) ? 'config.json' : 'config.example.json';
@@ -27,6 +28,15 @@ try {
   if (!Array.isArray(store.entries)) store.entries = [];
   store.rev = Number(store.rev) || 0;
 } catch { /* 처음 실행 */ }
+
+// 축하 화환 (방문하지 못한 분들용)
+let wreaths = { entries: [] };
+try { wreaths = JSON.parse(fs.readFileSync(WREATH_FILE, 'utf8')); if (!Array.isArray(wreaths.entries)) wreaths.entries = []; } catch { /* 처음 실행 */ }
+function saveWreaths() {
+  const tmp = WREATH_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(wreaths, null, 1));
+  fs.renameSync(tmp, WREATH_FILE);
+}
 
 let saveTimer = null;
 function save() {
@@ -53,6 +63,10 @@ function validateLook(look) {
   }
   return out;
 }
+
+const WREATH_KEYS = ['shape', 'flower', 'accent', 'ribbon', 'deco'];
+const validateWreathLook = (look) => Object.fromEntries(WREATH_KEYS.map((k) => [k, String(look?.[k] ?? '')]).filter(([, v]) => /^[a-z0-9-]{1,20}$/.test(v)));
+const publicWreath = (e) => ({ id: e.id, n: e.n, sender: e.sender, ribbon: e.ribbon, msg: e.msg, look: e.look, at: e.at });
 
 const publicEntry = (e) => ({ id: e.id, n: e.n, name: e.name, msg: e.msg, look: e.look, at: e.at });
 
@@ -113,6 +127,35 @@ const server = http.createServer(async (req, res) => {
       save();
       return send(res, 201, { ok: true, entry: publicEntry(entry), rev: store.rev });
     }
+    // ---- 축하 화환 ----
+    if (p === '/api/wreaths' && req.method === 'GET') {
+      return send(res, 200, { entries: wreaths.entries.filter((e) => !e.hidden).map(publicWreath) });
+    }
+    if (p === '/api/wreaths' && req.method === 'POST') {
+      const body = await readBody(req);
+      const sender = clean(body.sender, 10), ribbon = clean(body.ribbon, 12), msg = clean(body.msg, 80);
+      if ([sender, ribbon, msg].some(hasBanned)) return send(res, 400, { error: '조금 더 순한 말로 적어 주세요 🙂' });
+      const recent = wreaths.entries.filter((e) => Date.now() - e.at < 60000).length;
+      if (recent >= 10) return send(res, 429, { error: '화환이 한꺼번에 몰리고 있어요. 잠시 뒤에 다시 보내 주세요.' });
+      const entry = { id: crypto.randomUUID(), n: wreaths.entries.length + 1, sender: sender || '익명', ribbon: ribbon || '축 졸업전시', msg, look: validateWreathLook(body.look), at: Date.now() };
+      wreaths.entries.push(entry);
+      saveWreaths();
+      return send(res, 201, { ok: true, entry: publicWreath(entry) });
+    }
+    if (p === '/api/admin/wreaths' && req.method === 'GET') {
+      if (!isAdmin(req)) return send(res, 403, { error: 'PIN이 맞지 않아요.' });
+      return send(res, 200, { entries: wreaths.entries });
+    }
+    const mw = p.match(/^\/api\/admin\/wreaths\/([\w-]{8,64})$/);
+    if (mw && req.method === 'PATCH') {
+      if (!isAdmin(req)) return send(res, 403, { error: 'PIN이 맞지 않아요.' });
+      const e = wreaths.entries.find((x) => x.id === mw[1]);
+      if (!e) return send(res, 404, { error: '없는 화환이에요.' });
+      e.hidden = !!(await readBody(req)).hidden;
+      saveWreaths();
+      return send(res, 200, { ok: true });
+    }
+
     // ---- 관리자 ----
     if (p === '/api/admin/entries' && req.method === 'GET') {
       if (!isAdmin(req)) return send(res, 403, { error: 'PIN이 맞지 않아요.' });
@@ -132,7 +175,8 @@ const server = http.createServer(async (req, res) => {
 
     // ---- 정적 파일 ----
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method Not Allowed');
-    let rel = decodeURIComponent(p === '/' ? '/index.html' : p);
+    let rel = decodeURIComponent(p.endsWith('/') ? p + 'index.html' : p);
+    if (rel === '/wreath') { res.writeHead(301, { Location: '/wreath/' }); return res.end(); }
     const file = path.normalize(path.join(PUBLIC, rel));
     if (!file.startsWith(PUBLIC + path.sep)) return send(res, 403, 'Forbidden');
     fs.stat(file, (err, st) => {
@@ -167,6 +211,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log(`  이 컴퓨터 (터치 화면 하나):   http://localhost:${PORT}/`);
   console.log(`  큰 화면 (보기 전용):          http://localhost:${PORT}/?mode=display`);
+  console.log(`  축하 화환 (방문 못한 분들):    http://localhost:${PORT}/wreath/`);
   for (const ip of ips) console.log(`  태블릿 (같은 와이파이):        http://${ip}:${PORT}/?mode=kiosk`);
   console.log('');
   console.log(`  저장 위치: ${DATA_FILE}`);

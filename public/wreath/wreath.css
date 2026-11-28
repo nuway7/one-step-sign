@@ -1,0 +1,95 @@
+/* 축하 화환 페이지: ../style.css 위에 덮어써요 (휴대폰 세로 화면도 함께 고려) */
+body.wreath-page { --hh: clamp(64px, 13vh, 128px); background: #16203f; }
+
+/* 머리글 */
+.w-head { position: fixed; top: 0; left: 0; right: 0; height: var(--hh); display: flex; align-items: center; gap: clamp(10px, 2vw, 28px);
+  padding: 8px clamp(12px, 2.4vw, 36px); background: radial-gradient(ellipse at 30% 0%, #2a3a72, #16203f 80%); z-index: 5; }
+.w-head img { height: 100%; width: auto; max-width: 38vw; object-fit: contain; filter: drop-shadow(0 4px 0 rgba(0,0,0,.25)); }
+.w-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.w-copy b { color: var(--yellow); font-size: clamp(18px, 3.6vh, 40px); font-weight: 800; word-break: keep-all; text-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.w-copy span { color: #c9d6f5; font-size: clamp(12px, 2vh, 22px); font-weight: 600; word-break: keep-all; }
+
+/* 공간 */
+body.wreath-page #space { top: var(--hh); background: radial-gradient(ellipse at 50% 30%, #2a3a72, #121a36 80%); }
+.lobby-sign { position: absolute; left: 50%; top: calc(18px * var(--s)); transform: translateX(-50%); height: calc(14px * var(--s)); line-height: calc(14px * var(--s));
+  color: var(--yellow); font-weight: 800; font-size: calc(8px * var(--s)); letter-spacing: .12em; white-space: nowrap; pointer-events: none; }
+.w-empty { left: 50%; top: calc(178px * var(--s)); border-color: #c8323f; }
+.w-empty b { color: #c8323f; }
+.w-status { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 10px; align-items: center; z-index: 20; pointer-events: none;
+  font-size: clamp(13px, 1.6vw, 18px); font-weight: 700; color: #fff; }
+.w-status #stCount { background: var(--navy); border: 2px solid #fff; border-radius: 999px; padding: 6px 14px; }
+.w-status #stCount b { color: var(--yellow); }
+.w-tip { color: var(--navy); background: rgba(255,255,255,.85); border-radius: 999px; padding: 4px 12px; font-size: .85em; }
+.w-join { background: #ff8fb8; }
+.w-join .ic { background: #fff; color: var(--navy); }
+
+/* 흐름: 휴대폰에서는 위아래로 스크롤 */
+body.wreath-page #flow { overflow-y: auto; align-items: flex-start; padding: 18px 0 30px; }
+body.wreath-page .step { max-height: none; margin: auto; }
+.w-fitting { padding: 18px 10px; }
+#bigPreview { width: min(100%, 200px); margin-top: 0; }
+.opt canvas.wthumb { width: 48px; height: 116px; }
+.opt .sw { margin: 8px 0; }
+.options { max-height: 54vh; }
+
+/* 리본 */
+.w-ribbon { width: 100%; display: grid; grid-template-columns: minmax(180px, 30%) 1fr; gap: 18px; align-items: start; }
+#ribbonPreview { width: 100%; max-width: 220px; justify-self: center; image-rendering: pixelated; background: linear-gradient(#f4ecdf, #e8dcc8);
+  border: 3px solid var(--navy); border-radius: 18px; padding: 10px; }
+.w-fields { display: flex; flex-direction: column; gap: 12px; }
+.w-field { display: flex; flex-direction: column; gap: 6px; background: #fff; border: 3px solid var(--navy); border-radius: 14px; padding: 10px 14px; }
+.w-field span { font-weight: 800; color: var(--blue); font-size: 16px; }
+.w-field input { font-size: clamp(20px, 2.4vw, 28px); font-weight: 800; border: 0; border-bottom: 3px dashed #c8323f; padding: 6px 2px; outline: none; color: var(--navy); background: transparent; }
+.w-fields .chips { justify-content: flex-start; }
+.w-fields .chip { min-height: 42px; padding: 6px 14px; font-size: 16px; }
+
+/* 카드 */
+.w-card { width: min(720px, 100%); background: #fffaf2; border: 3px solid var(--navy); border-radius: 16px; overflow: hidden; box-shadow: 0 6px 0 rgba(31,42,77,.2); }
+.w-card-top { background: #ff8fb8; color: var(--navy); font-weight: 800; padding: 8px 14px; font-size: 18px; }
+.w-card-top small { font-weight: 600; opacity: .7; }
+.w-card textarea { width: 100%; height: 150px; border: 0; outline: none; resize: none; padding: 14px 18px; background:
+  linear-gradient(#f3e6d6 1px, transparent 1px) 0 12px / 100% 40px, transparent; font-size: clamp(20px, 2.2vw, 28px); line-height: 40px; color: var(--navy); font-weight: 600; }
+.w-card-foot { display: flex; justify-content: flex-end; padding: 6px 14px; background: #f6ead9; color: #6a7597; font-size: 15px; }
+
+#doneFace { width: 150px; height: auto; image-rendering: pixelated; animation: hop 1.2s ease-in-out infinite; }
+body.wreath-page .done-title { color: #c8323f; text-shadow: 0 5px 0 var(--yellow); }
+
+/* 보기 */
+.w-view { position: relative; display: flex; gap: 20px; align-items: center; width: min(720px, 92vw); background: #fffaf2; border: 3px solid var(--navy);
+  border-radius: 18px; padding: 22px; box-shadow: 0 8px 0 rgba(15,22,50,.4); animation: pop .25s ease-out; }
+.w-view .x { position: absolute; right: 10px; top: 10px; border-color: var(--navy); color: var(--navy); }
+body.wreath-page #vFace { position: static; width: 150px; height: auto; flex: none; image-rendering: pixelated; }
+.w-view-body { flex: 1; min-width: 0; }
+.w-view-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-right: 40px; }
+.w-view-meta b { font-size: clamp(20px, 2.6vw, 28px); }
+.w-view-meta span { color: #6a7597; font-size: 15px; }
+.w-view-ribbon { display: inline-block; margin: 10px 0; padding: 4px 12px; background: #c8323f; color: #fff4c9; font-weight: 800; border-radius: 6px; font-size: 18px; }
+#vMsg { margin: 0; font-size: clamp(18px, 2.2vw, 26px); line-height: 1.6; font-weight: 600; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+
+/* 관리자 */
+body.wreath-page #authPane { padding-bottom: 8px; }
+
+/* ---------- 휴대폰 ---------- */
+@media (max-width: 720px) {
+  .w-copy span { display: none; }
+  .wardrobe { grid-template-columns: 1fr; gap: 12px; }
+  .w-fitting { flex-direction: row; justify-content: center; gap: 18px; padding: 12px; }
+  #bigPreview { width: 110px; }
+  .ctabs button { min-width: 0; font-size: 15px; min-height: 44px; padding: 0 4px; }
+  .options { grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); max-height: none; gap: 8px; padding: 10px; }
+  .opt { min-height: 0; font-size: 14px; }
+  .opt canvas.wthumb { width: 36px; height: 87px; }
+  .opt .sw { width: 44px; height: 44px; }
+  .w-ribbon { grid-template-columns: 1fr; }
+  #ribbonPreview { max-width: 140px; }
+  .stage-head { padding: 8px 10px; gap: 10px; }
+  .stage-tag { font-size: 14px; padding: 3px 10px; }
+  .dots { display: none; }
+  .back { width: 46px; height: 46px; font-size: 22px; }
+  .btn.big { min-height: 62px; }
+  .w-view { flex-direction: column; text-align: center; padding: 18px; }
+  .w-view-meta { justify-content: center; margin-right: 0; }
+  body.wreath-page #vFace { width: 110px; }
+  .w-status .w-tip { display: none; }
+  .w-join { font-size: 18px; padding: .6em 1em; right: 12px; bottom: 12px; }
+}

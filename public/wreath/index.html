@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한 칸만 옮겼는데 · 축하 화환</title>
+<meta name="description" content="졸업전시 「한 칸만 옮겼는데」에 오지 못한 분들도 화환을 꾸며 축하를 보낼 수 있어요.">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="wreath.css">
+</head>
+<body class="wreath-page">
+  <!-- 머리글 -->
+  <header class="w-head">
+    <img id="logoHit" src="../assets/logo.webp" alt="한 칸만 옮겼는데">
+    <div class="w-copy">
+      <b>축하 화환 보내기</b>
+      <span>전시장에 오지 못하셨나요? 화환을 꾸며 마음을 전해 주세요.</span>
+    </div>
+  </header>
+
+  <!-- 공간: 한 칸 컴퍼니 1층 로비 -->
+  <section id="space">
+    <div id="stage">
+      <canvas id="world"></canvas>
+      <div id="layer">
+        <div class="lobby-sign">한 칸 컴퍼니</div>
+        <div id="empty" class="empty w-empty hidden">
+          <b>아직 도착한 화환이 없어요</b>
+          <span>첫 번째 화환을 보내 주세요!</span>
+        </div>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <div class="w-status"><span id="stCount">화환 0개 도착</span><span class="w-tip">화환을 누르면 메시지를 볼 수 있어요</span></div>
+    <button id="joinBtn" class="join-btn w-join"><span class="ic">💐</span> 화환 보내기</button>
+  </section>
+
+  <!-- 보내기 흐름 -->
+  <section id="flow" class="hidden">
+    <div class="flow-bg"></div>
+
+    <!-- 0. 시작 -->
+    <div class="step" data-step="start">
+      <img class="logo" src="../assets/logo.webp" alt="한 칸만 옮겼는데">
+      <p class="lead">졸업전시에 와 주지 못해도 괜찮아요!<br>화환을 꾸며 보내면 <b>한 칸 컴퍼니 로비</b>에 배달돼요.</p>
+      <button class="btn big primary" data-go="design">화환 꾸미기 시작</button>
+      <p class="notice">보낸 화환과 리본 문구, 메시지는 이 사이트에 공개돼요.</p>
+      <button class="btn ghost" data-close>로비 구경하기</button>
+    </div>
+
+    <!-- 1. 꾸미기 -->
+    <div class="step" data-step="design">
+      <header class="stage-head"><button class="back" data-back>←</button><div class="stage-tag">STEP 1</div><h2>화환 꾸미기</h2><div class="dots"><i class="on"></i><i></i><i></i></div></header>
+      <div class="wardrobe">
+        <div class="fitting w-fitting">
+          <canvas id="bigPreview"></canvas>
+          <button class="btn small" id="randomBtn">🎲 랜덤</button>
+        </div>
+        <div class="closet">
+          <div class="ctabs" id="ctabs"></div>
+          <div class="options" id="options"></div>
+        </div>
+      </div>
+      <footer class="step-foot"><button class="btn big primary" data-go="ribbon">리본 달기</button></footer>
+    </div>
+
+    <!-- 2. 리본 -->
+    <div class="step" data-step="ribbon">
+      <header class="stage-head"><button class="back" data-back>←</button><div class="stage-tag">STEP 2</div><h2>리본 문구</h2><div class="dots"><i class="on"></i><i class="on"></i><i></i></div></header>
+      <div class="w-ribbon">
+        <canvas id="ribbonPreview"></canvas>
+        <div class="w-fields">
+          <label class="w-field">
+            <span>왼쪽 리본 · 축하 문구</span>
+            <input id="ribbonInput" autocomplete="off" placeholder="축 졸업전시">
+          </label>
+          <div class="chips" id="ribbonChips"></div>
+          <label class="w-field">
+            <span>오른쪽 리본 · 보내는 사람</span>
+            <input id="senderInput" autocomplete="off" placeholder="이름 (비워 두면 익명)">
+          </label>
+          <div class="chips" id="senderChips"></div>
+        </div>
+      </div>
+      <footer class="step-foot"><button class="btn big primary" data-go="msg">카드 쓰기</button></footer>
+    </div>
+
+    <!-- 3. 카드 메시지 -->
+    <div class="step" data-step="msg">
+      <header class="stage-head"><button class="back" data-back>←</button><div class="stage-tag">STEP 3</div><h2>축하 카드</h2><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></div></header>
+      <div class="w-card">
+        <div class="w-card-top">💌 축하 카드 <small>(선택)</small></div>
+        <textarea id="msgInput" placeholder="졸업과 전시를 축하하는 한 마디를 남겨 주세요"></textarea>
+        <div class="w-card-foot"><span id="msgCount">0 / 80자</span></div>
+      </div>
+      <div class="chips" id="msgChips"></div>
+      <p class="err" id="err"></p>
+      <footer class="step-foot"><button class="btn big primary" id="submitBtn">화환 보내기</button></footer>
+    </div>
+
+    <!-- 4. 완료 -->
+    <div class="step" data-step="done">
+      <canvas id="doneFace"></canvas>
+      <h2 class="done-title">배달 완료!</h2>
+      <p class="lead" id="doneText">로비에서 내 화환을 찾아보세요.</p>
+      <button class="btn big primary" data-close>로비로 가기</button>
+    </div>
+  </section>
+
+  <!-- 화환 보기 -->
+  <div id="viewer" class="modal hidden">
+    <div class="w-view">
+      <button class="x" data-vclose>✕</button>
+      <canvas id="vFace"></canvas>
+      <div class="w-view-body">
+        <div class="w-view-meta"><b id="vSender"></b><span id="vInfo"></span></div>
+        <p class="w-view-ribbon" id="vRibbon"></p>
+        <p id="vMsg"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 관리자 (로고를 3초 안에 5번) -->
+  <div id="admin" class="modal hidden">
+    <div class="admin-card">
+      <div class="admin-head"><b>관리자 · 화환</b><button class="x" data-aclose>✕</button></div>
+      <div id="authPane">
+        <form id="loginPane" class="admin-box" autocomplete="on">
+          <b>관리자 로그인</b>
+          <p class="hint" id="loginHint">방명록과 같은 관리자 계정으로 로그인해요.</p>
+          <input id="loginEmail" type="email" autocomplete="username" placeholder="이메일">
+          <input id="loginPw" type="password" autocomplete="current-password" placeholder="비밀번호">
+          <button class="btn small primary" type="submit">로그인</button>
+        </form>
+        <p class="err" id="pinErr"></p>
+      </div>
+      <div id="adminPane" class="hidden">
+        <div class="admin-tools"><button class="btn small" id="reloadBtn">새로고침</button><span id="adminCount"></span></div>
+        <div class="admin-list" id="adminList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="wreath.js"></script>
+</body>
+</html>
