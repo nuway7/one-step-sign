@@ -2,6 +2,8 @@
 // 세로는 324 로 고정하고, 가로는 화면 비율에 맞춰 늘이거나 줄여요 (휴대폰 세로 화면도 꽉 차게).
 // 가운데 빨간 카펫 양옆으로 화환이 줄지어 서고, 새 화환은 입구 문에서 배달되어 자리에 놓여요.
 import { getWreathSprite, drawRibbonText, SW, SH } from './wreath-art.js';
+import { getSprite, SPRITE_W, SPRITE_H } from '../sprites.js';
+import { TEAM } from '../config.js';
 
 let H = 324;                  // 세로 (휴대폰 세로 화면에서는 더 길어져요)
 const W_MIN = 232, W_MAX = 640;
@@ -20,11 +22,10 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const choice = (arr) => arr[Math.floor(Math.random() * arr.length)];
 function px(ctx, x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
-const logo = new Image(); logo.src = '../assets/logo.webp';
 
 export class Lobby {
-  constructor({ canvas, layer, onTap, onDoor }) {
-    this.canvas = canvas; this.layer = layer; this.onTap = onTap; this.onDoor = onDoor;
+  constructor({ canvas, layer, onTap, onDoor, onSpot }) {
+    this.canvas = canvas; this.layer = layer; this.onTap = onTap; this.onDoor = onDoor; this.onSpot = onSpot;
     this.doorOpenAt = 0;
     this.ctx = canvas.getContext('2d');
     this.bg = document.createElement('canvas');
@@ -39,7 +40,7 @@ export class Lobby {
     addEventListener('resize', () => this.resize());
     if (window.ResizeObserver) new ResizeObserver(() => this.resize()).observe(this.host);
     layer.addEventListener('pointerdown', (e) => this.handleTap(e));
-    layer.addEventListener('pointermove', (e) => { const [x, y] = this.toLocal(e); layer.style.cursor = this.hitWreath(x, y) || this.onDoorArea(x, y) ? 'pointer' : ''; });
+    layer.addEventListener('pointermove', (e) => { const [x, y] = this.toLocal(e); layer.style.cursor = this.hitWreath(x, y) || this.hitSpot(x, y) || this.onDoorArea(x, y) ? 'pointer' : ''; });
     requestAnimationFrame((t) => this.loop(t));
   }
 
@@ -127,17 +128,25 @@ export class Lobby {
     px(ctx, cx0, WALL + 4, this.carpet, H - WALL - 4, C.carpet);
     px(ctx, cx0, WALL + 4, 2, H - WALL - 4, C.gold); px(ctx, cx0 + this.carpet - 2, WALL + 4, 2, H - WALL - 4, C.gold);
     for (let y = WALL + 10; y < H; y += 12) px(ctx, cx0 + 5, y, this.carpet - 10, 1, C.carpetD);
-    // 벽 장식: 넓으면 엘리베이터와 게임 포스터
-    if (W >= 420) {
+    // 벽 장식: 넓으면 엘리베이터
+    const wide = W >= 420;
+    if (wide) {
       const ex = 26; // 엘리베이터
       px(ctx, ex - 3, 38, 50, WALL - 38 - 26 + 26, '#9aa3b8');
       px(ctx, ex, 44, 21, WALL - 44 - 2, '#c9d0de'); px(ctx, ex + 23, 44, 21, WALL - 44 - 2, '#c9d0de');
       px(ctx, ex + 21, 44, 2, WALL - 46, '#7f889c');
       px(ctx, ex + 14, 32, 16, 5, C.navy); px(ctx, ex + 18, 33, 2, 3, '#ff6b5b'); px(ctx, ex + 23, 33, 3, 3, '#7cf0a0');
-      const pxx = W - 96; // 포스터 액자
-      px(ctx, pxx - 3, 30, 76, 54, '#8a6a4a'); px(ctx, pxx, 33, 70, 48, '#2a3a72');
-      this.poster = { x: pxx + 3, y: 36, w: 64, h: 42 };
-    } else this.poster = null;
+    }
+    // 누를 수 있는 벽 장식: 팀 액자(만든 사람들), 게임 소개 게시판
+    this.spots = [];
+    const tf = wide ? { x: W - 106, y: 18, w: 94, h: 74, k: 2 } : { x: 4, y: 26, w: 50, h: 54, k: 1 };
+    this.teamFrame = drawTeamFrame(ctx, tf);
+    this.spots.push({ kind: 'team', ...tf, label: '만든 사람들' });
+    const plantL = Math.round(mid - dw / 2 - 22);
+    const bd = wide && plantL - 84 >= 84 ? { x: 84, y: 32, w: 82, h: 54 } : wide ? null : { x: W - 54, y: 26, w: 50, h: 54 };
+    if (bd) { drawInfoBoard(ctx, bd); this.spots.push({ kind: 'info', ...bd, label: '게임 소개' }); }
+    this.board = bd;
+    this.renderSpotLabels();
     // 화분 (문 양옆)
     for (const x of [mid - dw / 2 - 22, mid + dw / 2 + 8]) drawPlant(ctx, Math.round(x), WALL - 16);
   }
@@ -226,11 +235,45 @@ export class Lobby {
     }
     return best;
   }
+  hitSpot(lx, ly) { return (this.spots || []).find((s) => lx >= s.x - 2 && lx <= s.x + s.w + 2 && ly >= s.y - 2 && ly <= s.y + s.h + 2) || null; }
+  // 벽 장식 위에 "눌러 보세요" 표시 (DOM 글자)
+  renderSpotLabels() {
+    this.layer.querySelectorAll('.spot-label').forEach((n) => n.remove());
+    for (const s of this.spots) {
+      const d = document.createElement('div'); d.className = 'spot-label'; d.textContent = s.label + ' ▶';
+      d.style.left = `calc(${s.x + s.w / 2}px * var(--s))`; d.style.top = `calc(${s.y - 1}px * var(--s))`;
+      this.layer.append(d);
+    }
+  }
+  // 액자의 이름, 게시판 제목: 캔버스 글자로 또렷하게
+  drawWallText(ctx, now) {
+    const tf = this.teamFrame;
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (tf) {
+      ctx.fillStyle = C.navy; ctx.font = `800 ${tf.k === 2 ? 5.4 : 3.6}px ${FONT}`;
+      ctx.fillText('팀 허송세월', tf.x + tf.w / 2, tf.titleY);
+      ctx.fillStyle = '#ffffff'; ctx.font = `800 ${tf.k === 2 ? 5.2 : 3.6}px ${FONT}`;
+      for (const n of tf.names) ctx.fillText(n.name, n.x, n.y);
+    }
+    const bd = this.board;
+    if (bd) {
+      ctx.fillStyle = '#ffffff'; ctx.font = `800 ${bd.w > 60 ? 5.6 : 4}px ${FONT}`;
+      ctx.fillText('게임 소개', bd.x + bd.w / 2, bd.y + 7);
+    }
+    ctx.restore();
+    // 반짝이는 표시
+    for (const s of this.spots || []) {
+      if (Math.floor(now / 500) % 2) continue;
+      px(ctx, s.x + s.w - 2, s.y - 2, 2, 4, '#ffd23f'); px(ctx, s.x + s.w - 3, s.y - 1, 4, 2, '#ffd23f');
+    }
+  }
   onDoorArea(lx, ly) { return Math.abs(lx - this.W / 2) <= DOOR.w / 2 + 4 && ly >= DOOR.y - 4 && ly <= WALL + 6; }
   handleTap(e) {
     const [lx, ly] = this.toLocal(e);
     const best = this.hitWreath(lx, ly);
     if (best) { best.tapAt = performance.now(); this.onTap?.(best.entry); return; }
+    const spot = this.hitSpot(lx, ly);
+    if (spot) { this.onSpot?.(spot.kind); return; }
     // 입구 문: 문이 열리는 모습을 보여 준 뒤 방명록으로
     if (this.onDoorArea(lx, ly) && !this.doorOpenAt) {
       this.doorOpenAt = performance.now();
@@ -286,11 +329,7 @@ export class Lobby {
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this.bg, 0, 0);
-    if (this.poster && logo.complete && logo.naturalWidth) {
-      const p = this.poster, r = Math.min(p.w / logo.naturalWidth, p.h / logo.naturalHeight);
-      const w = logo.naturalWidth * r, h = logo.naturalHeight * r;
-      ctx.imageSmoothingEnabled = true; ctx.drawImage(logo, p.x + (p.w - w) / 2, p.y + (p.h - h) / 2, w, h); ctx.imageSmoothingEnabled = false;
-    }
+    this.drawWallText(ctx, now);
     // 문 열림 (양쪽 유리문이 옆으로 밀려 들어가요)
     if (this.doorOpenAt) {
       const t = Math.min(1, (now - this.doorOpenAt) / 450), mid = this.W / 2, half = DOOR.w / 2, h = WALL - DOOR.y;
@@ -339,6 +378,47 @@ export class Lobby {
     drawRibbonText(ctx, it.entry.look || {}, sx, y, it.entry.ribbon, it.entry.sender);
     ctx.globalAlpha = 1;
   }
+}
+
+// 팀 액자: 나무 테두리 안에 팀원 도트 캐릭터를 나란히 (이름은 drawWallText 가 써요)
+function drawTeamFrame(ctx, f) {
+  const k = f.k;
+  px(ctx, f.x, f.y, f.w, f.h, '#8a6a4a'); px(ctx, f.x + 1, f.y + 1, f.w - 2, 1, '#b08a62');
+  px(ctx, f.x + 3, f.y + 3, f.w - 6, f.h - 6, '#2a3a72');
+  const titleH = k === 2 ? 10 : 7;
+  px(ctx, f.x + 3, f.y + 3, f.w - 6, titleH, '#ffd23f');
+  // 바닥 띠
+  px(ctx, f.x + 3, f.y + f.h - (k === 2 ? 13 : 9), f.w - 6, 1, '#3d4f8c');
+  const cw = SPRITE_W * k, ch = SPRITE_H * k, gap = k === 2 ? 8 : 3;
+  const total = TEAM.length * cw + (TEAM.length - 1) * gap;
+  const x0 = Math.round(f.x + (f.w - total) / 2), y0 = f.y + 3 + titleH + (k === 2 ? 1 : 0);
+  const names = [];
+  TEAM.forEach((m, i) => {
+    const x = x0 + i * (cw + gap);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(getSprite(m.look, 'happy'), x, y0, cw, ch);
+    names.push({ name: m.name, x: x + cw / 2, y: y0 + ch + (k === 2 ? 5 : 3.5) });
+  });
+  return { ...f, titleY: f.y + 3 + titleH / 2 + 0.5, names };
+}
+
+// 게임 소개 게시판: 화이트보드에 작은 퍼즐 격자와 문서
+function drawInfoBoard(ctx, b) {
+  px(ctx, b.x, b.y, b.w, b.h, '#8a93ad'); px(ctx, b.x + 2, b.y + 2, b.w - 4, b.h - 4, '#fffdf7');
+  px(ctx, b.x + 2, b.y + 2, b.w - 4, 10, '#2b5fd9');
+  const cell = b.w > 60 ? 7 : 5, cols = 4, rows = 3;
+  const gx = Math.round(b.x + (b.w - cols * cell) / 2), gy = b.y + 15;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    px(ctx, gx + c * cell, gy + r * cell, cell - 1, cell - 1, (r + c) % 2 ? '#e6ebf5' : '#d4dcec');
+  }
+  const doc = (c, r, col) => { px(ctx, gx + c * cell + 1, gy + r * cell + 1, cell - 3, cell - 3, col); };
+  doc(0, 0, '#ef5b5b'); doc(2, 1, '#2b5fd9'); doc(3, 2, '#ffd23f');
+  // 목표 칸 점선 + 캐릭터 점
+  px(ctx, gx + 1 * cell + 1, gy + 2 * cell + 1, cell - 3, 1, '#ef5b5b');
+  px(ctx, gx + 1 * cell + cell / 2 - 1, gy + 1 * cell + 1, 2, cell - 3, '#7a4526');
+  // 받침 펜 꽂이
+  px(ctx, b.x + 6, b.y + b.h - 4, b.w - 12, 2, '#6b7a99');
+  px(ctx, b.x + 10, b.y + b.h - 5, 6, 1, '#ef4552'); px(ctx, b.x + 18, b.y + b.h - 5, 6, 1, '#2b5fd9');
 }
 
 function shade2(c) { return c === C.wain ? '#d2b893' : c; }

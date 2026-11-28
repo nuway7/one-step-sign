@@ -2,6 +2,7 @@
 import { Lobby } from './lobby.js';
 import { PART_LISTS, DEFAULT_LOOK, randomLook, paintWreath2x, getWreathSprite } from './wreath-art.js';
 import { api, ApiError, LIMITS } from './wreath-api.js';
+import { openGameInfo, setupGameInfo } from './game-info.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -11,8 +12,15 @@ $('#ribbonInput').maxLength = LIMITS.maxRibbon;
 $('#msgInput').maxLength = LIMITS.maxMessage;
 
 // ================= 로비 =================
-// 입구 문을 누르면 방명록 사무실(메인 방명록)로 들어가요
-const lobby = new Lobby({ canvas: $('#world'), layer: $('#layer'), onTap: openViewer, onDoor: () => { location.href = '../'; } });
+// 입구 문을 누르면 방명록 사무실(부스 화면: 방명록 + 게임 영상)로 들어가요
+// 벽의 게시판은 게임 소개, 팀 액자는 만든 사람들로 바로 열려요
+const lobby = new Lobby({
+  canvas: $('#world'), layer: $('#layer'), onTap: openViewer,
+  onDoor: () => { location.href = '../?mode=booth'; },
+  onSpot: (kind) => { closeViewer(); openGameInfo(kind === 'team' ? 'team' : 'story'); },
+});
+setupGameInfo();
+$('#infoBtn').addEventListener('click', () => openGameInfo('story'));
 
 let loaded = false, lastSig = '';
 async function poll() {

@@ -16,6 +16,7 @@
       <b>축하 화환 보내기</b>
       <span>전시장에 오지 못하셨나요? 화환을 꾸며 마음을 전해 주세요.</span>
     </div>
+    <button class="w-info-btn" id="infoBtn">🎮 게임 소개</button>
   </header>
 
   <!-- 공간: 한 칸 컴퍼니 1층 로비 -->
@@ -118,6 +119,18 @@
         <p class="w-view-ribbon" id="vRibbon"></p>
         <p id="vMsg"></p>
       </div>
+    </div>
+  </div>
+
+  <!-- 게임 소개 (로비의 게시판·액자, 머리글 버튼) -->
+  <div id="gameInfo" class="modal hidden">
+    <div class="gi-doc">
+      <div class="doc-title"><b>W</b> 한칸만옮겼는데_소개.docx<button class="x" data-giclose>✕</button></div>
+      <nav class="gi-nav">
+        <button data-gi="story">이야기</button><button data-gi="rules">업무 규정</button><button data-gi="play">직접 해 보기</button>
+        <button data-gi="video">영상</button><button data-gi="behind">비하인드</button><button data-gi="team">만든 사람들</button>
+      </nav>
+      <div class="gi-page"></div>
     </div>
   </div>
 

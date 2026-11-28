@@ -30,6 +30,13 @@ export const EXHIBIT = {
   until: '2026-12-02', // 마지막 날
 };
 
+// 팀 허송세월: 화환 로비 액자와 게임 소개의 "만든 사람들"에 나와요.
+// look 은 방명록 옷장 부품 id 예요 (sprites.js 의 HAIR_STYLES, HAIR_COLORS, ACCESSORIES, OUTFITS, SKINS).
+export const TEAM = [
+  { name: '송채연', role: '기획', look: { hair: 'bob', hairColor: 'dark', acc: 'ribbon', outfit: 'cardigan', skin: 'light' } },
+  { name: '허혜림', role: '개발', look: { hair: 'part', hairColor: 'brown', acc: 'glasses', outfit: 'suit', skin: 'light' } },
+];
+
 export const LIMITS = {
   maxName: 10,          // 이름 최대 글자 수 (DB 설정과 맞춰 주세요)
   maxMessage: 80,       // 방명록 최대 글자 수
