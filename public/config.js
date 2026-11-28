@@ -13,7 +13,13 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_Vp5VkLXbZ4khSJxAdSftWw_sB0toaRj
 
 // 부스 모드(?mode=booth): 모니터 한 대에 방명록 + 게임 소개 영상을 함께 띄워요.
 export const VIDEO = {
-  src: 'assets/intro.mp4', // 세로 영상 파일
+  // 적은 순서대로 번갈아 가며 끝없이 반복해요. 하나만 적으면 그 영상만 반복해요.
+  playlist: [
+    'assets/play.mp4',     // 게임 플레이 영상
+    'assets/cutscene.mp4', // 인트로 컷씬
+  ],
+  ratio: 9 / 16,           // 영상 칸의 가로:세로 비율
+  fit: 'contain',          // 'contain' = 잘리지 않게 전부 보이기, 'cover' = 칸을 꽉 채우기 (가장자리가 잘려요)
   side: 'right',           // 'right' 또는 'left'
   sound: false,            // true 면 소리 켜기 (브라우저가 막으면 첫 터치 때 켜져요)
 };

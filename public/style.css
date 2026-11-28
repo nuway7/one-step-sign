@@ -202,7 +202,9 @@ body.mode-booth .join-btn { font-size: clamp(18px, 2.6vh, 36px); }
 #videoPane { position: fixed; top: 0; bottom: 0; right: 0; width: var(--vw); background: #0b1126; z-index: 10; overflow: hidden;
   border-left: 4px solid var(--navy); box-shadow: -10px 0 30px rgba(0, 0, 0, .35); }
 body.video-left #videoPane { left: 0; right: auto; border-left: 0; border-right: 4px solid var(--navy); box-shadow: 10px 0 30px rgba(0, 0, 0, .35); }
-#videoPane video { width: 100%; height: 100%; object-fit: cover; display: block; background: #0b1126; }
+#videoPane video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: var(--video-fit, contain); display: block;
+  background: #0b1126; opacity: 0; transition: opacity .25s; }
+#videoPane video.on { opacity: 1; }
 .video-tag { position: absolute; top: 1.6vh; left: 1.6vh; background: var(--yellow); color: var(--navy); font-weight: 800; font-size: 1.6vh;
   padding: .3em .7em; border: 2px solid var(--navy); border-radius: 6px; letter-spacing: .08em; pointer-events: none; }
 body.mode-booth #flow, body.mode-booth #viewer { right: var(--vw); }
