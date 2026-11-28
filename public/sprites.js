@@ -221,6 +221,29 @@ export const ACCESSORIES = [
     '....WWWkkWWW....',
     '......W..W......',
   ], pal: { H: '#b9bcc4', h: '#9a9ea8', r: '#d6d8de', R: '#a7abb4', W: '#ffffff', k: '#aab0bd' } },
+  // 산타 모자: 오른쪽으로 접힌 빨간 모자, 흰 방울과 털 띠
+  { id: 'santahat', name: '산타 모자', dy: -2, rows: [
+    '......RRRRRRRWW.',
+    '....RRRRRRRRrWW.',
+    '..RRRRRRRRRRRr..',
+    '.WWWWWWWWWWWWWW.',
+    '.wWWWWWWWWWWWWw.',
+  ], pal: { R: '#d93b3b', r: '#a82633', W: '#ffffff', w: '#e3e7ee' } },
+  // 루돌프 뿔 + 빨간 코
+  { id: 'antler', name: '루돌프 뿔', dy: -2, rows: [
+    '.A.A........A.A.',
+    '.AAA........AAA.',
+    '..AA........AA..',
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '.......Nn.......',
+    '.......NN.......',
+  ], pal: { A: '#8a5a35', N: '#ff3b3b', n: '#ffb3b3' } },
 ];
 
 const BODY_TEMPLATES = {
@@ -255,6 +278,28 @@ const BODY_TEMPLATES = {
     '..PPPPP..PPPPP..',
     '..KKKKK..KKKKK..',
   ],
+  // 산타: 흰 털 목깃과 앞섶, 검은 벨트(T)와 금색 버클(B), 흰 털 밑단
+  santa: [
+    '..JJJJWWWWJJJJ..',
+    '.JJJJJjWWjJJJJJ.',
+    '.JJJJJJWWJJJJJJ.',
+    '.JTTTTTBBTTTTTJ.',
+    '.SJJJJJWWJJJJJS.',
+    '.SWWWWWWWWWWWWS.',
+    '..PPPPP..PPPPP..',
+    '..KKKKK..KKKKK..',
+  ],
+  // 루돌프: 갈색 몸, 밝은 배(W), 빨간 목줄(T)에 금색 방울(B)
+  rudolph: [
+    '..JJJJTBBTJJJJ..',
+    '.JJJJJWBBWJJJJJ.',
+    '.JJJJWWWWWWJJJJ.',
+    '.JJJJWWWWWWJJJJ.',
+    '.SJJJJWWWWJJJJS.',
+    '.SjJJJJJJJJJJjS.',
+    '..PPPPP..PPPPP..',
+    '..KKKKK..KKKKK..',
+  ],
 };
 
 export const OUTFITS = [
@@ -266,6 +311,8 @@ export const OUTFITS = [
   { id: 'field', name: '현장 근무복', t: 'suit', J: '#c9a777', W: '#f0e6d2', T: '#4f7a4a', P: '#6b5a44' },
   { id: 'coral', name: '코랄 러너', t: 'hoodie', J: '#ff7a66', W: '#fff1ec', T: '#ffffff', P: '#3b3c47' },
   { id: 'lemon', name: '레몬 레인코트', t: 'hoodie', J: '#ffd23f', W: '#fff7d6', T: '#3b6fe0', P: '#39405e' },
+  { id: 'santa', name: '산타', t: 'santa', J: '#d93b3b', W: '#ffffff', T: '#262833', P: '#c43030', B: '#ffd23f' },
+  { id: 'rudolph', name: '루돌프', t: 'rudolph', J: '#9a6234', W: '#f2dcb8', T: '#d93b3b', P: '#7a4a26', B: '#ffd23f' },
 ];
 
 export const PART_LISTS = { hair: HAIR_STYLES, hairColor: HAIR_COLORS, acc: ACCESSORIES, outfit: OUTFITS, skin: SKINS };
@@ -414,7 +461,7 @@ export function getSprite(look, expr = 'normal', frame = 0) {
   drawFace(buf, skin, expr);
   stamp(buf, hair.rows, 0, HEAD_Y, { H: hc, D: shade(hc, -0.26), L: shade(hc, 0.26), S: skin, G: shade(skin, 0.45) },
     (ch) => (ch === 'S' || ch === 'G' ? 'scalp' : 'hair'));
-  if (hair.clip && !['cap', 'headphone', 'hood'].includes(look.acc)) drawClip(buf);
+  if (hair.clip && !['cap', 'headphone', 'hood', 'santahat'].includes(look.acc)) drawClip(buf);
   stamp(buf, acc.rows, 0, HEAD_Y + acc.dy, acc.pal, 'acc');
   lightAndShadow(buf);
   c = toCanvas(buf);
