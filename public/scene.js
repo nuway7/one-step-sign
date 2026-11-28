@@ -1,12 +1,13 @@
 // 방명록 공간: 워드 문서 창 모양의 도트 사무실
-// 논리 해상도 480 x 270 을 정수 배율로 키워서 그려요 (도트가 번지지 않게).
+// 논리 해상도 576 x 324 를 정수 배율로 키워서 그려요 (도트가 번지지 않게).
 import { getSprite, SPRITE_W, SPRITE_H, shade } from './sprites.js';
+import { EXHIBIT } from './config.js';
 
-export const W = 480, H = 270;
+export const W = 576, H = 324;
 const CELL = 16;
 const GX = 8, GY = 88;          // 바닥 격자 시작점
-const COLS = 29, ROWS = 10;
-const DOOR = { cx: 24, cy: 0 }; // 퇴근 문 앞 칸
+const COLS = 35, ROWS = 13;
+const DOOR = { cx: 26, cy: 0 }; // 퇴근 문 앞 칸
 const STEP_MS = 230;
 
 const C = {
@@ -125,15 +126,66 @@ function skyFor(date) {
 // 바닥에 놓인 막힌 칸
 const PROPS = [
   { cx: 0, cy: 0, kind: 'cab' }, { cx: 1, cy: 0, kind: 'cab' },
-  { cx: 28, cy: 9, kind: 'plant' }, { cx: 0, cy: 9, kind: 'plant' },
-  { cx: 27, cy: 9, kind: 'paper' }, { cx: 1, cy: 9, kind: 'paper' },
-  { cx: 6, cy: 3, kind: 'doc', color: '#ef5b5b' }, { cx: 21, cy: 6, kind: 'doc', color: C.blue },
-  { cx: 14, cy: 8, kind: 'doc', color: C.yellow }, { cx: 10, cy: 6, kind: 'doc', color: C.blue },
-  { cx: 18, cy: 2, kind: 'doc', color: C.yellow },
+  { cx: COLS - 1, cy: ROWS - 1, kind: 'plant' }, { cx: 0, cy: ROWS - 1, kind: 'plant' },
+  { cx: COLS - 2, cy: ROWS - 1, kind: 'paper' }, { cx: 1, cy: ROWS - 1, kind: 'paper' },
+  { cx: 6, cy: 3, kind: 'doc', color: '#ef5b5b' }, { cx: 28, cy: 7, kind: 'doc', color: C.blue },
+  { cx: 11, cy: 10, kind: 'doc', color: C.yellow }, { cx: 9, cy: 7, kind: 'doc', color: C.blue },
+  { cx: 22, cy: 2, kind: 'doc', color: C.yellow }, { cx: 24, cy: 11, kind: 'doc', color: '#ef5b5b' },
 ];
-const GOALS = [{ cx: 8, cy: 3, c: '#ef5b5b' }, { cx: 23, cy: 6, c: C.blue }, { cx: 16, cy: 8, c: C.yellowD }, { cx: 4, cy: 6, c: C.blue }];
+const GOALS = [{ cx: 8, cy: 3, c: '#ef5b5b' }, { cx: 30, cy: 7, c: C.blue }, { cx: 13, cy: 10, c: C.yellowD }, { cx: 4, cy: 7, c: C.blue }, { cx: 26, cy: 11, c: '#ef5b5b' }];
 
-function paintStatic(ctx, sky) {
+// ---------- D-DAY (전시일까지 남은 날) ----------
+// 전시 전: D-3, D-2 …  / 전시 기간: D-DAY / 끝난 뒤: 표시 안 함
+function dayStart(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).getTime(); }
+export function ddayLabel(now = new Date()) {
+  if (!EXHIBIT?.from) return '';
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const from = dayStart(EXHIBIT.from), until = dayStart(EXHIBIT.until || EXHIBIT.from);
+  if (today < from) return 'D-' + Math.round((from - today) / 86400000);
+  if (today <= until) return 'D-DAY';
+  return '';
+}
+
+// 5 x 7 도트 글자
+const GLYPHS = {
+  D: ['1110.', '1..1.', '1...1', '1...1', '1...1', '1..1.', '1110.'],
+  A: ['.111.', '1...1', '1...1', '11111', '1...1', '1...1', '1...1'],
+  Y: ['1...1', '1...1', '.1.1.', '..1..', '..1..', '..1..', '..1..'],
+  '-': ['.....', '.....', '.....', '1111.', '.....', '.....', '.....'],
+  '.': ['.....', '.....', '.....', '.....', '.....', '.....', '..1..'],
+  ' ': ['.....', '.....', '.....', '.....', '.....', '.....', '.....'],
+  0: ['.111.', '1...1', '1..11', '1.1.1', '11..1', '1...1', '.111.'],
+  1: ['..1..', '.11..', '..1..', '..1..', '..1..', '..1..', '.111.'],
+  2: ['.111.', '1...1', '....1', '...1.', '..1..', '.1...', '11111'],
+  3: ['1111.', '....1', '....1', '.111.', '....1', '....1', '1111.'],
+  4: ['...1.', '..11.', '.1.1.', '1..1.', '11111', '...1.', '...1.'],
+  5: ['11111', '1....', '1111.', '....1', '....1', '1...1', '.111.'],
+  6: ['..11.', '.1...', '1....', '1111.', '1...1', '1...1', '.111.'],
+  7: ['11111', '....1', '...1.', '..1..', '.1...', '.1...', '.1...'],
+  8: ['.111.', '1...1', '1...1', '.111.', '1...1', '1...1', '.111.'],
+  9: ['.111.', '1...1', '1...1', '.1111', '....1', '...1.', '.11..'],
+};
+function textWidth(text, k) { return text.length * 6 * k - k; }
+function drawPixelText(ctx, text, x, y, k, color) {
+  [...text].forEach((ch, i) => {
+    const g = GLYPHS[ch] || GLYPHS[' '];
+    g.forEach((row, gy) => [...row].forEach((v, gx) => { if (v === '1') px(ctx, x + (i * 6 + gx) * k, y + gy * k, k, k, color); }));
+  });
+}
+// 바닥 한가운데에 크게 그려요 (캐릭터는 그 위를 걸어 다녀요)
+function drawDday(ctx, label) {
+  if (!label) return;
+  const k = 7, cx = GX + (COLS * CELL) / 2, cy = GY + (ROWS * CELL) / 2;
+  const w = textWidth(label, k), x = Math.round(cx - w / 2), y = Math.round(cy - 7 * k / 2) - 8;
+  drawPixelText(ctx, label, x + 3, y + 3, k, '#c9d5f2'); // 그림자
+  drawPixelText(ctx, label, x, y, k, label === 'D-DAY' ? C.blue : C.blueL);
+  // 아래에 작은 전시 날짜 (예: 12.01 - 12.02)
+  const sub = [...new Set([EXHIBIT.from, EXHIBIT.until].filter(Boolean).map((d) => d.slice(5).replace('-', '.')))].join(' - ');
+  const sw = textWidth(sub, 2);
+  drawPixelText(ctx, sub, Math.round(cx - sw / 2), y + 7 * k + 8, 2, '#8a9bc4');
+}
+
+function paintStatic(ctx, sky, dday) {
   ctx.clearRect(0, 0, W, H);
   // 제목 표시줄
   px(ctx, 0, 0, W, 14, C.blue);
@@ -167,27 +219,28 @@ function paintStatic(ctx, sky) {
   for (let x = GX; x < W - 8; x += 4) px(ctx, x, (x - GX) % CELL === 0 ? 35 : 37, 1, (x - GX) % CELL === 0 ? 4 : 2, C.rulerTick);
   px(ctx, 0, 39, W, 1, C.line);
   // 세로 눈금자
-  px(ctx, 0, 40, 6, 220, C.ruler);
-  for (let y = 44; y < 256; y += 4) px(ctx, (y - GY) % CELL === 0 ? 1 : 3, y, (y - GY) % CELL === 0 ? 4 : 2, 1, C.rulerTick);
-  px(ctx, 6, 40, 1, 220, C.line);
+  px(ctx, 0, 40, 6, H - 50, C.ruler);
+  for (let y = 44; y < H - 14; y += 4) px(ctx, (y - GY) % CELL === 0 ? 1 : 3, y, (y - GY) % CELL === 0 ? 4 : 2, 1, C.rulerTick);
+  px(ctx, 6, 40, 1, H - 50, C.line);
 
   // 페이지
-  px(ctx, 7, 40, W - 7, 220, '#eef2f9');
-  px(ctx, GX, 40, COLS * CELL, 216, C.page);
+  px(ctx, 7, 40, W - 7, H - 50, '#eef2f9');
+  px(ctx, GX, 40, COLS * CELL, GY + ROWS * CELL + 8 - 40, C.page);
 
   // 뒷벽
   px(ctx, GX, 40, COLS * CELL, 48, C.wall);
   px(ctx, GX, 40, COLS * CELL, 2, C.wallL);
   px(ctx, GX, 84, COLS * CELL, 4, C.wallD);
-  drawWindow(ctx, GX + 44, 48, 104, 30, sky);
-  drawBinders(ctx, GX + 172, 52);
+  drawWindow(ctx, GX + 44, 48, 120, 30, sky);
+  drawBinders(ctx, GX + 188, 52);
+  drawWindow(ctx, GX + 478, 48, 64, 30, sky);
   // 시계
-  px(ctx, GX + 272, 50, 14, 14, '#ffffff'); px(ctx, GX + 273, 51, 12, 12, '#f3f6fc');
-  px(ctx, GX + 278, 53, 2, 5, C.navy); px(ctx, GX + 279, 57, 4, 1, C.navy);
+  px(ctx, GX + 284, 50, 14, 14, '#ffffff'); px(ctx, GX + 285, 51, 12, 12, '#f3f6fc');
+  px(ctx, GX + 290, 53, 2, 5, C.navy); px(ctx, GX + 291, 57, 4, 1, C.navy);
   // 게시판 (방명록 공지)
-  px(ctx, GX + 300, 48, 56, 30, '#c99a62'); px(ctx, GX + 302, 50, 52, 26, '#e6c28f');
+  px(ctx, GX + 312, 48, 56, 30, '#c99a62'); px(ctx, GX + 314, 50, 52, 26, '#e6c28f');
   [[305, 53, C.yellow], [319, 55, '#ffffff'], [333, 52, '#9ad1ff'], [310, 64, '#ffffff'], [326, 65, C.coral]].forEach(([x, y, c]) => {
-    px(ctx, GX + x - 2 + 2, y, 11, 9, c); px(ctx, GX + x + 3, y - 1, 2, 2, '#ef4552');
+    px(ctx, GX + 12 + x, y, 11, 9, c); px(ctx, GX + 12 + x + 3, y - 1, 2, 2, '#ef4552');
   });
   // 퇴근 문
   drawDoor(ctx, GX + DOOR.cx * CELL, 40 + 4 + 12);
@@ -201,16 +254,17 @@ function paintStatic(ctx, sky) {
   px(ctx, GX + DOOR.cx * CELL - 4, GY, 40, 6, '#9db7f5');
   px(ctx, GX + DOOR.cx * CELL - 3, GY + 1, 38, 4, '#b9ccf8');
 
+  drawDday(ctx, dday);
   for (const g of GOALS) dashedSquare(ctx, GX + g.cx * CELL, GY + g.cy * CELL, g.c);
   // 페이지 아래 여백
   px(ctx, GX, GY + ROWS * CELL, COLS * CELL, 8, C.page);
 
   // 상태 표시줄
-  px(ctx, 0, 260, W, 10, C.ruler);
-  px(ctx, 0, 260, W, 1, C.line);
+  px(ctx, 0, H - 10, W, 10, C.ruler);
+  px(ctx, 0, H - 10, W, 1, C.line);
   // 확대 슬라이더
-  px(ctx, W - 82, 265, 40, 1, '#8090b0'); px(ctx, W - 64, 262, 3, 6, C.blue);
-  px(ctx, W - 88, 265, 3, 1, '#596789'); px(ctx, W - 38, 265, 3, 1, '#596789'); px(ctx, W - 37, 264, 1, 3, '#596789');
+  px(ctx, W - 82, H - 5, 40, 1, '#8090b0'); px(ctx, W - 64, H - 8, 3, 6, C.blue);
+  px(ctx, W - 88, H - 5, 3, 1, '#596789'); px(ctx, W - 38, H - 5, 3, 1, '#596789'); px(ctx, W - 37, H - 6, 1, 3, '#596789');
 }
 
 function drawProp(ctx, p) {
@@ -377,7 +431,7 @@ export class Scene {
         if (this.occupied(nx, ny, a) && !(isGoal && allowGoalOccupied && !this.blocked.has(`${nx},${ny}`) && nx >= 0 && ny >= 0 && nx < COLS && ny < ROWS)) continue;
         prev.set(nk, key(x, y)); q.push([nx, ny]);
       }
-      if (prev.size > 600) break;
+      if (prev.size > COLS * ROWS) break;
     }
     return null;
   }
@@ -437,8 +491,8 @@ export class Scene {
   // ----- 메인 루프 -----
   loop(now) {
     requestAnimationFrame((t) => this.loop(t));
-    const sky = skyFor(new Date());
-    if (sky.key !== this.skyKey) { this.skyKey = sky.key; paintStatic(this.bg.getContext('2d'), sky); }
+    const d = new Date(), sky = skyFor(d), dday = ddayLabel(d), key = sky.key + '|' + dday;
+    if (key !== this.skyKey) { this.skyKey = key; paintStatic(this.bg.getContext('2d'), sky, dday); }
     this.update(now);
     this.draw(now);
   }

@@ -25,12 +25,12 @@ button { font-family: var(--font); cursor: pointer; touch-action: manipulation; 
   display: flex; gap: calc(9px * var(--s)); align-items: center; font-size: calc(5.2px * var(--s)); color: #4a5578; pointer-events: none; }
 .tabs .on { color: var(--blue); font-weight: 700; box-shadow: 0 calc(1px * var(--s)) 0 var(--blue); }
 .tabs .font { position: absolute; left: calc(219px * var(--s)); top: calc(9.5px * var(--s)); font-size: calc(4.4px * var(--s)); color: #3b4466; }
-.door-sign { position: absolute; left: calc(396px * var(--s)); top: calc(43px * var(--s)); width: calc(24px * var(--s)); height: calc(9px * var(--s));
+.door-sign { position: absolute; left: calc(428px * var(--s)); top: calc(43px * var(--s)); width: calc(24px * var(--s)); height: calc(9px * var(--s));
   line-height: calc(9px * var(--s)); text-align: center; color: #fff; font-weight: 800; font-size: calc(6px * var(--s)); letter-spacing: .05em; pointer-events: none; }
-.status-text { position: absolute; left: calc(10px * var(--s)); top: calc(260px * var(--s)); height: calc(10px * var(--s)); display: flex; gap: calc(12px * var(--s));
+.status-text { position: absolute; left: calc(10px * var(--s)); top: calc(314px * var(--s)); height: calc(10px * var(--s)); display: flex; gap: calc(12px * var(--s));
   align-items: center; font-size: calc(5px * var(--s)); color: #4a5578; pointer-events: none; }
 .status-text b { color: var(--blue); }
-.zoom-text { position: absolute; left: calc(448px * var(--s)); top: calc(260px * var(--s)); height: calc(10px * var(--s)); line-height: calc(10px * var(--s));
+.zoom-text { position: absolute; left: calc(544px * var(--s)); top: calc(314px * var(--s)); height: calc(10px * var(--s)); line-height: calc(10px * var(--s));
   font-size: calc(4.6px * var(--s)); color: #4a5578; pointer-events: none; }
 
 .name-tag { position: absolute; left: 0; top: 0; padding: 0 calc(1.5px * var(--s)); max-width: calc(34px * var(--s)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -45,7 +45,7 @@ button { font-family: var(--font); cursor: pointer; touch-action: manipulation; 
   background: #fff; border-right: calc(1px * var(--s)) solid var(--navy); border-bottom: calc(1px * var(--s)) solid var(--navy); transform: translateX(-50%) rotate(45deg); }
 .bubble.on { opacity: 1; }
 
-.empty { position: absolute; left: 50%; top: calc(160px * var(--s)); transform: translate(-50%, -50%); text-align: center; background: rgba(255,255,255,.92);
+.empty { position: absolute; left: 50%; top: calc(266px * var(--s)); transform: translate(-50%, -50%); text-align: center; background: rgba(255,255,255,.92);
   padding: calc(6px * var(--s)) calc(12px * var(--s)); border: calc(1px * var(--s)) dashed var(--blue); pointer-events: none; }
 .empty b { display: block; font-size: calc(7px * var(--s)); color: var(--blue); }
 .empty span { font-size: calc(5px * var(--s)); color: var(--ink); }
@@ -195,8 +195,8 @@ body.mode-booth #stage { position: relative; inset: auto; flex: 1; min-height: 0
 body.mode-booth .booth-head { display: flex; align-items: center; gap: 2vw; height: 17vh; padding: 2.4vh 2.4vw 0; flex: none; }
 .booth-head img { height: 100%; width: auto; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .25)); }
 .booth-copy { display: flex; flex-direction: column; gap: .6vh; }
-.booth-copy b { color: var(--yellow); font-size: 4.2vh; font-weight: 800; text-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
-.booth-copy span { color: #c9d6f5; font-size: 2.4vh; font-weight: 600; }
+.booth-copy b { word-break: keep-all; color: var(--yellow); font-size: 4.2vh; font-weight: 800; text-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+.booth-copy span { word-break: keep-all; color: #c9d6f5; font-size: 2.4vh; font-weight: 600; }
 body.mode-booth .join-btn { font-size: clamp(18px, 2.6vh, 36px); }
 
 #videoPane { position: fixed; top: 0; bottom: 0; right: 0; width: var(--vw); background: #0b1126; z-index: 10; overflow: hidden;

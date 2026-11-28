@@ -123,6 +123,20 @@ export const HAIR_STYLES = [
     '...............H',
     '...............D',
   ] },
+  // S 정수리 피부, G 정수리 반짝임. 옆머리만 남고, 관자놀이 쪽 끝이 위로 뻗쳐요.
+  { id: 'bald', name: '대머리', rows: [
+    '...SSSSSSSSSS...',
+    '..SSSGGSSSSSSS..',
+    '.SSSSSSSSSSSSSS.',
+    '.L............L.',
+    'HHL..........LHH',
+    'HHHD........DHHH',
+    'HHH..........HHH',
+    'HH............HH',
+    'HH............HH',
+    'HD............DH',
+    'D..............D',
+  ] },
 ];
 
 export const HAIR_COLORS = [
@@ -322,6 +336,10 @@ function lightAndShadow(buf) {
       if (T(x, y - 1) !== 'hair' && y <= HEAD_Y + 3) return shade(c, 0.18);       // 정수리 빛
       if (T(x + 1, y) !== 'hair' && x >= 9) return shade(c, -0.16);                // 오른쪽 옆면 그늘
     }
+    if (t === 'scalp') {
+      if (T(x, y - 1) !== 'scalp' && y === HEAD_Y) return shade(c, 0.12);         // 정수리 빛
+      if (T(x + 1, y) !== 'scalp' && x >= 9) return shade(c, -0.08);               // 오른쪽 옆면 그늘
+    }
     if (t === 'face') {
       const above = T(x, y - 1);
       if (above === 'hair' || above === 'clip' || above === 'acc') return shade(c, -0.12); // 앞머리 그림자
@@ -376,7 +394,8 @@ export function getSprite(look, expr = 'normal', frame = 0) {
   const buf = new Buf();
   drawBody(buf, outfit, skin, frame);
   drawFace(buf, skin, expr);
-  stamp(buf, hair.rows, 0, HEAD_Y, { H: hc, D: shade(hc, -0.26), L: shade(hc, 0.26) }, 'hair');
+  stamp(buf, hair.rows, 0, HEAD_Y, { H: hc, D: shade(hc, -0.26), L: shade(hc, 0.26), S: skin, G: shade(skin, 0.45) },
+    (ch) => (ch === 'S' || ch === 'G' ? 'scalp' : 'hair'));
   if (hair.clip && look.acc !== 'cap' && look.acc !== 'headphone') drawClip(buf);
   stamp(buf, acc.rows, 0, HEAD_Y + acc.dy, acc.pal, 'acc');
   lightAndShadow(buf);

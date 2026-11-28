@@ -24,6 +24,12 @@ export const VIDEO = {
   sound: false,            // true 면 소리 켜기 (브라우저가 막으면 첫 터치 때 켜져요)
 };
 
+// 전시 기간: 사무실 바닥 가운데에 D-3, D-2 … 전시 날에는 D-DAY로 보여 줘요. 끝난 뒤에는 표시하지 않아요.
+export const EXHIBIT = {
+  from: '2026-12-01',  // 첫날 (YYYY-MM-DD)
+  until: '2026-12-02', // 마지막 날
+};
+
 export const LIMITS = {
   maxName: 10,          // 이름 최대 글자 수 (DB 설정과 맞춰 주세요)
   maxMessage: 80,       // 방명록 최대 글자 수

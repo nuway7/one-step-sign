@@ -1,4 +1,4 @@
-// 한 칸만 옮겼는데 – 졸업전시 방명록 서버
+// 한 칸만 옮겼는데 방명록 서버
 // 의존성 없음. Node 18 이상에서 `node server.mjs` 로 실행합니다.
 import http from 'node:http';
 import fs from 'node:fs';
