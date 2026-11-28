@@ -6,6 +6,7 @@ import { getWreathSprite, drawRibbonText, SW, SH } from './wreath-art.js';
 let H = 324;                  // 세로 (휴대폰 세로 화면에서는 더 길어져요)
 const W_MIN = 232, W_MAX = 640;
 const WALL = 116;            // 벽과 바닥 경계
+const DOOR = { w: 70, y: 40 }; // 입구 자동문 (가운데). 누르면 방명록 사무실로 가요
 let ROWS = [206, 264, 320];   // 화환이 서는 줄 (바닥 닿는 y)
 const GAP = 44;               // 화환 사이 간격
 const C = {
@@ -22,8 +23,9 @@ function px(ctx, x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 const logo = new Image(); logo.src = '../assets/logo.webp';
 
 export class Lobby {
-  constructor({ canvas, layer, onTap }) {
-    this.canvas = canvas; this.layer = layer; this.onTap = onTap;
+  constructor({ canvas, layer, onTap, onDoor }) {
+    this.canvas = canvas; this.layer = layer; this.onTap = onTap; this.onDoor = onDoor;
+    this.doorOpenAt = 0;
     this.ctx = canvas.getContext('2d');
     this.bg = document.createElement('canvas');
     this.W = 0; this.scale = 1;
@@ -37,6 +39,7 @@ export class Lobby {
     addEventListener('resize', () => this.resize());
     if (window.ResizeObserver) new ResizeObserver(() => this.resize()).observe(this.host);
     layer.addEventListener('pointerdown', (e) => this.handleTap(e));
+    layer.addEventListener('pointermove', (e) => { const [x, y] = this.toLocal(e); layer.style.cursor = this.hitWreath(x, y) || this.onDoorArea(x, y) ? 'pointer' : ''; });
     requestAnimationFrame((t) => this.loop(t));
   }
 
@@ -101,7 +104,7 @@ export class Lobby {
     for (let x = 6; x < W; x += 30) { px(ctx, x, WALL - 21, 24, 16, shade2(C.wain)); }
     px(ctx, 0, WALL - 2, W, 2, C.wainD);
     // 입구 자동문 (가운데)
-    const dw = 70, dx = Math.round(mid - dw / 2), dy = 40;
+    const dw = DOOR.w, dx = Math.round(mid - dw / 2), dy = DOOR.y;
     px(ctx, dx - 4, dy - 4, dw + 8, WALL - dy + 4, C.frame);
     px(ctx, dx, dy, dw, WALL - dy, C.glass);
     px(ctx, mid - 1, dy, 2, WALL - dy, C.frame);
@@ -211,15 +214,28 @@ export class Lobby {
   }
 
   // ---------- 터치 ----------
-  handleTap(e) {
+  toLocal(e) {
     const r = this.layer.getBoundingClientRect();
-    const lx = (e.clientX - r.left) / this.scale, ly = (e.clientY - r.top) / this.scale;
+    return [(e.clientX - r.left) / this.scale, (e.clientY - r.top) / this.scale];
+  }
+  hitWreath(lx, ly) {
     let best = null;
     for (const it of this.items.values()) {
       const sx = it.x - SW / 2, sy = it.y - SH + 18;
       if (lx >= sx + 2 && lx <= sx + SW - 2 && ly >= sy && ly <= it.y + 2 && (!best || it.y > best.y)) best = it;
     }
-    if (best) { best.tapAt = performance.now(); this.onTap?.(best.entry); }
+    return best;
+  }
+  onDoorArea(lx, ly) { return Math.abs(lx - this.W / 2) <= DOOR.w / 2 + 4 && ly >= DOOR.y - 4 && ly <= WALL + 6; }
+  handleTap(e) {
+    const [lx, ly] = this.toLocal(e);
+    const best = this.hitWreath(lx, ly);
+    if (best) { best.tapAt = performance.now(); this.onTap?.(best.entry); return; }
+    // 입구 문: 문이 열리는 모습을 보여 준 뒤 방명록으로
+    if (this.onDoorArea(lx, ly) && !this.doorOpenAt) {
+      this.doorOpenAt = performance.now();
+      setTimeout(() => { this.onDoor?.(); setTimeout(() => { this.doorOpenAt = 0; }, 800); }, 520);
+    }
   }
 
   // ---------- 루프 ----------
@@ -274,6 +290,19 @@ export class Lobby {
       const p = this.poster, r = Math.min(p.w / logo.naturalWidth, p.h / logo.naturalHeight);
       const w = logo.naturalWidth * r, h = logo.naturalHeight * r;
       ctx.imageSmoothingEnabled = true; ctx.drawImage(logo, p.x + (p.w - w) / 2, p.y + (p.h - h) / 2, w, h); ctx.imageSmoothingEnabled = false;
+    }
+    // 문 열림 (양쪽 유리문이 옆으로 밀려 들어가요)
+    if (this.doorOpenAt) {
+      const t = Math.min(1, (now - this.doorOpenAt) / 450), mid = this.W / 2, half = DOOR.w / 2, h = WALL - DOOR.y;
+      const shift = Math.round(half * t);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(mid - half, DOOR.y, DOOR.w, h); ctx.clip(); // 문틀 밖으로 밀려난 유리는 안 보이게
+      px(ctx, mid - half, DOOR.y, DOOR.w, h, '#2b5fd9');             // 안쪽: 방명록 사무실 (워드 파랑)
+      for (let gy = DOOR.y + 8; gy < WALL; gy += 8) px(ctx, mid - half, gy, DOOR.w, 1, '#5b86ee');
+      ctx.globalAlpha = 0.35 * t; px(ctx, mid - half, DOOR.y, DOOR.w, h, '#ffffff'); ctx.globalAlpha = 1;
+      px(ctx, mid - half - shift, DOOR.y, half, h, C.glass); px(ctx, mid + shift, DOOR.y, half, h, C.glass);
+      px(ctx, mid - 1 - shift, DOOR.y, 2, h, C.frame); px(ctx, mid - 1 + shift, DOOR.y, 2, h, C.frame);
+      ctx.restore();
     }
     // 앞뒤 순서: 위쪽(뒷줄) 먼저
     const list = [...this.items.values()].sort((a, b) => a.y - b.y || a.x - b.x);

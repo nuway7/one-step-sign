@@ -11,7 +11,8 @@ $('#ribbonInput').maxLength = LIMITS.maxRibbon;
 $('#msgInput').maxLength = LIMITS.maxMessage;
 
 // ================= 로비 =================
-const lobby = new Lobby({ canvas: $('#world'), layer: $('#layer'), onTap: openViewer });
+// 입구 문을 누르면 방명록 사무실(메인 방명록)로 들어가요
+const lobby = new Lobby({ canvas: $('#world'), layer: $('#layer'), onTap: openViewer, onDoor: () => { location.href = '../'; } });
 
 let loaded = false, lastSig = '';
 async function poll() {
