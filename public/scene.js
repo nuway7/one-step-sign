@@ -307,9 +307,8 @@ export class Scene {
 
   resize() {
     const vw = this.host.clientWidth || window.innerWidth, vh = this.host.clientHeight || window.innerHeight;
-    // 정수 배율이 가능하면 정수로, 화면이 작으면 소수 배율
-    let s = Math.min(vw / W, vh / H);
-    if (s >= 2) s = Math.floor(s * 2) / 2;
+    // 남는 여백 없이 들어갈 수 있는 만큼 최대로 키워요
+    const s = Math.min(vw / W, vh / H);
     this.scale = s;
     const cw = Math.round(W * s), ch = Math.round(H * s);
     const ratio = window.devicePixelRatio || 1;

@@ -203,6 +203,24 @@ export const ACCESSORIES = [
     '..........RRrRR.',
     '..........RR.RR.',
   ], pal: { R: '#ef4552', r: '#a82633' } },
+  // 머리 전체를 덮는 회색 후드: 얼굴 둘레 주름(r/R), 턱 밑 흰 리본(W, 매듭 k)
+  { id: 'hood', name: '후드', dy: -1, rows: [
+    '...HHHHHHHHHH...',
+    '..HHHHHHHHHHHh..',
+    '.HHHHHHHHHHHHHh.',
+    'HHHHHHHHHHHHHHhh',
+    'HHHrRrRrRrRrRHhh',
+    'HHR..........rhh',
+    'HHr..........Rhh',
+    'HHR..........rhh',
+    'HHr..........Rhh',
+    'HHR..........rhh',
+    'HHr..........Rhh',
+    'HHHR........rHhh',
+    'HHHHWW....WWHhhh',
+    '....WWWkkWWW....',
+    '......W..W......',
+  ], pal: { H: '#b9bcc4', h: '#9a9ea8', r: '#d6d8de', R: '#a7abb4', W: '#ffffff', k: '#aab0bd' } },
 ];
 
 const BODY_TEMPLATES = {
@@ -396,7 +414,7 @@ export function getSprite(look, expr = 'normal', frame = 0) {
   drawFace(buf, skin, expr);
   stamp(buf, hair.rows, 0, HEAD_Y, { H: hc, D: shade(hc, -0.26), L: shade(hc, 0.26), S: skin, G: shade(skin, 0.45) },
     (ch) => (ch === 'S' || ch === 'G' ? 'scalp' : 'hair'));
-  if (hair.clip && look.acc !== 'cap' && look.acc !== 'headphone') drawClip(buf);
+  if (hair.clip && !['cap', 'headphone', 'hood'].includes(look.acc)) drawClip(buf);
   stamp(buf, acc.rows, 0, HEAD_Y + acc.dy, acc.pal, 'acc');
   lightAndShadow(buf);
   c = toCanvas(buf);
