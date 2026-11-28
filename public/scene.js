@@ -1,12 +1,15 @@
 // 방명록 공간: 워드 문서 창 모양의 도트 사무실
-// 논리 해상도 576 x 324 를 정수 배율로 키워서 그려요 (도트가 번지지 않게).
+// 논리 해상도 가로 576, 세로는 화면 비율에 맞춰(최소 324) 늘려서 그려요. 세로가 길면 바닥 줄 수가 늘어나요.
 import { getSprite, SPRITE_W, SPRITE_H, shade } from './sprites.js';
 import { EXHIBIT } from './config.js';
 
-export const W = 576, H = 324;
+export const W = 576;
+export let H = 324;
+const H_MIN = 324, H_MAX = 560;
 const CELL = 16;
 const GX = 8, GY = 88;          // 바닥 격자 시작점
-const COLS = 35, ROWS = 13;
+const COLS = 35;
+let ROWS = 13;
 const DOOR = { cx: 26, cy: 0 }; // 퇴근 문 앞 칸
 const STEP_MS = 230;
 
@@ -124,7 +127,20 @@ function skyFor(date) {
 }
 
 // 바닥에 놓인 막힌 칸
-const PROPS = [
+// 크리스마스 트리: 바닥 가운데. 트리 밑동 줄(row)과 그 앞 D-DAY 현수막 자리는 막힌 칸이에요.
+const TREE_CX = Math.floor(COLS / 2);
+const treeRow = () => Math.floor(ROWS / 2) + 1;
+function buildProps() {
+  const tr = treeRow();
+  const list = [
+    { cx: TREE_CX, cy: tr, kind: 'tree' },
+    { cx: TREE_CX, cy: tr + 2, kind: 'banner' },
+  ];
+  for (let c = TREE_CX - 2; c <= TREE_CX + 2; c++) for (const r of [tr - 1, tr]) list.push({ cx: c, cy: r, kind: 'block' });
+  for (let c = TREE_CX - 3; c <= TREE_CX + 3; c++) for (const r of [tr + 1, tr + 2]) list.push({ cx: c, cy: r, kind: 'block' });
+  return list.concat(BASE_PROPS());
+}
+const BASE_PROPS = () => [
   { cx: 0, cy: 0, kind: 'cab' }, { cx: 1, cy: 0, kind: 'cab' },
   { cx: COLS - 1, cy: ROWS - 1, kind: 'plant' }, { cx: 0, cy: ROWS - 1, kind: 'plant' },
   { cx: COLS - 2, cy: ROWS - 1, kind: 'paper' }, { cx: 1, cy: ROWS - 1, kind: 'paper' },
@@ -132,6 +148,7 @@ const PROPS = [
   { cx: 11, cy: 10, kind: 'doc', color: C.yellow }, { cx: 9, cy: 7, kind: 'doc', color: C.blue },
   { cx: 22, cy: 2, kind: 'doc', color: C.yellow }, { cx: 24, cy: 11, kind: 'doc', color: '#ef5b5b' },
 ];
+let PROPS = buildProps();
 const GOALS = [{ cx: 8, cy: 3, c: '#ef5b5b' }, { cx: 30, cy: 7, c: C.blue }, { cx: 13, cy: 10, c: C.yellowD }, { cx: 4, cy: 7, c: C.blue }, { cx: 26, cy: 11, c: '#ef5b5b' }];
 
 // ---------- D-DAY (전시일까지 남은 날) ----------
@@ -172,20 +189,145 @@ function drawPixelText(ctx, text, x, y, k, color) {
     g.forEach((row, gy) => [...row].forEach((v, gx) => { if (v === '1') px(ctx, x + (i * 6 + gx) * k, y + gy * k, k, k, color); }));
   });
 }
-// 바닥 한가운데에 크게 그려요 (캐릭터는 그 위를 걸어 다녀요)
-function drawDday(ctx, label) {
-  if (!label) return;
-  const k = 7, cx = GX + (COLS * CELL) / 2, cy = GY + (ROWS * CELL) / 2;
-  const w = textWidth(label, k), x = Math.round(cx - w / 2), y = Math.round(cy - 7 * k / 2) - 8;
-  drawPixelText(ctx, label, x + 3, y + 3, k, '#c9d5f2'); // 그림자
-  drawPixelText(ctx, label, x, y, k, label === 'D-DAY' ? C.blue : C.blueL);
-  // 아래에 작은 전시 날짜 (예: 12.01 - 12.02)
-  const sub = [...new Set([EXHIBIT.from, EXHIBIT.until].filter(Boolean).map((d) => d.slice(5).replace('-', '.')))].join(' - ');
-  const sw = textWidth(sub, 2);
-  drawPixelText(ctx, sub, Math.round(cx - sw / 2), y + 7 * k + 8, 2, '#8a9bc4');
+// ---------- 크리스마스 트리 + D-DAY 현수막 ----------
+const XMAS = { g1: '#1f8a4c', g2: '#2fae62', g3: '#46c977', gD: '#16683a', snow: '#ffffff', snowD: '#dfe9fb',
+  trunk: '#8a5a35', trunkD: '#6b4226', gold: '#ffd23f', goldD: '#e0a419', red: '#ef4552', redD: '#b8283a' };
+const BULBS = ['#ff5a5a', '#ffd23f', '#5bb6ff', '#ff8ad8', '#7cf0a0', '#ffffff'];
+
+function treeTier(ctx, cx, yTop, yBot, wTop, wBot) {
+  for (let y = yTop; y <= yBot; y++) {
+    const t = (y - yTop) / Math.max(1, yBot - yTop);
+    const w = Math.round(wTop + (wBot - wTop) * t), x = Math.round(cx - w / 2);
+    px(ctx, x, y, w, 1, XMAS.g2);
+    px(ctx, x, y, Math.ceil(w * 0.35), 1, XMAS.g3);           // 왼쪽 밝게
+    px(ctx, x + w - Math.ceil(w * 0.22), y, Math.ceil(w * 0.22), 1, XMAS.g1); // 오른쪽 어둡게
+    if (y === yBot) { // 층 아래 들쭉날쭉한 끝
+      for (let i = 0; i < w; i += 4) px(ctx, x + i, y + 1, 2, 1, XMAS.gD);
+    }
+  }
+  // 층 위 눈
+  const w0 = wTop + 4;
+  px(ctx, Math.round(cx - w0 / 2), yTop, w0, 1, XMAS.snow);
+  for (let i = 0; i < w0; i += 3) px(ctx, Math.round(cx - w0 / 2) + i, yTop + 1, 2, 1, XMAS.snowD);
 }
 
-function paintStatic(ctx, sky, dday) {
+function drawStar(ctx, cx, cy, glow) {
+  const S = ['...1...', '...1...', '1111111', '.11111.', '..111..', '.11.11.', '.1...1.'];
+  S.forEach((r, y) => [...r].forEach((v, x) => { if (v === '1') px(ctx, cx - 3 + x, cy + y, 1, 1, XMAS.gold); }));
+  px(ctx, cx, cy + 3, 1, 1, '#fff6c4');
+  if (glow) { // 반짝임
+    ctx.globalAlpha = 0.85;
+    px(ctx, cx, cy - 4, 1, 2, '#fff6c4'); px(ctx, cx, cy + 9, 1, 2, '#fff6c4');
+    px(ctx, cx - 6, cy + 3, 2, 1, '#fff6c4'); px(ctx, cx + 5, cy + 3, 2, 1, '#fff6c4');
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawPresent(ctx, x, y, w, h, c, rib) {
+  px(ctx, x, y, w, h, c); px(ctx, x + w - 2, y, 2, h, shade(c, -0.25));
+  px(ctx, x + Math.floor(w / 2) - 1, y, 2, h, rib); px(ctx, x, y + Math.floor(h / 2) - 1, w, 2, rib);
+  px(ctx, x + Math.floor(w / 2) - 3, y - 2, 2, 2, rib); px(ctx, x + Math.floor(w / 2) + 1, y - 2, 2, 2, rib);
+}
+
+// 트리 (밑동 y = 바닥 줄 아래쪽). 전구는 시간에 따라 깜빡여요.
+function drawTree(ctx, now) {
+  const cx = GX + TREE_CX * CELL + 8, base = GY + (treeRow() + 1) * CELL - 2;
+  // 그림자
+  ctx.globalAlpha = 0.18; px(ctx, cx - 44, base - 3, 88, 5, '#1f2a4d'); ctx.globalAlpha = 1;
+  // 줄기
+  px(ctx, cx - 5, base - 12, 10, 12, XMAS.trunk); px(ctx, cx + 2, base - 12, 3, 12, XMAS.trunkD);
+  // 잎 (아래층부터)
+  treeTier(ctx, cx, base - 40, base - 12, 40, 84);
+  treeTier(ctx, cx, base - 64, base - 38, 28, 66);
+  treeTier(ctx, cx, base - 86, base - 62, 16, 48);
+  treeTier(ctx, cx, base - 104, base - 84, 4, 30);
+  // 금색 가랜드 (사선 점선)
+  const garland = [[-38, -20, 34, -30], [-30, -46, 28, -54], [-20, -70, 18, -76]];
+  for (const [x1, y1, x2, y2] of garland) {
+    for (let i = 0; i <= 1; i += 0.04) {
+      const gx = Math.round(cx + x1 + (x2 - x1) * i), gy = Math.round(base + y1 + (y2 - y1) * i + Math.sin(i * Math.PI) * 4);
+      px(ctx, gx, gy, 2, 1, XMAS.gold);
+    }
+  }
+  // 오너먼트 + 전구
+  const dots = [[-30, -16], [-14, -24], [4, -18], [22, -22], [34, -16], [-22, -40], [-6, -48], [12, -44], [26, -42],
+    [-16, -66], [0, -72], [14, -68], [-8, -90], [6, -94], [-30, -30], [30, -28], [-4, -32], [16, -58], [-12, -56]];
+  dots.forEach(([dx, dy], i) => {
+    const on = (Math.floor(now / 380) + i) % 3 !== 0;
+    const c = BULBS[i % BULBS.length];
+    const x = cx + dx, y = base + dy;
+    if (i % 3 === 0) { px(ctx, x - 1, y - 1, 4, 4, shade(c, -0.35)); px(ctx, x - 1, y - 1, 3, 3, c); px(ctx, x - 1, y - 1, 1, 1, '#ffffff'); } // 동그란 볼
+    else {
+      px(ctx, x, y, 2, 2, on ? c : shade(c, -0.5));
+      if (on) { ctx.globalAlpha = 0.35; px(ctx, x - 1, y - 1, 4, 4, c); ctx.globalAlpha = 1; }
+    }
+  });
+  // 별
+  drawStar(ctx, cx, base - 112, Math.floor(now / 500) % 2 === 0);
+  // 선물 상자
+  drawPresent(ctx, cx - 40, base - 10, 14, 10, XMAS.red, XMAS.gold);
+  drawPresent(ctx, cx - 26, base - 7, 10, 7, '#3b78f0', '#ffffff');
+  drawPresent(ctx, cx + 16, base - 9, 12, 9, XMAS.gold, XMAS.red);
+  drawPresent(ctx, cx + 29, base - 6, 9, 6, '#7a54d6', '#ffd8f0');
+}
+
+// D-DAY 현수막: 빨간 리본 위에 금색 글씨. D-DAY 당일엔 글씨가 반짝여요.
+function drawBanner(ctx, label, now) {
+  if (!label) return;
+  const cx = GX + TREE_CX * CELL + 8, top = GY + (treeRow() + 1) * CELL + 6;
+  const k = 4, tw = textWidth(label, k), bw = tw + 28, bh = 7 * k + 10, x = Math.round(cx - bw / 2);
+  // 리본 꼬리
+  for (const [sx, outer] of [[x - 10, x - 10], [x + bw + 2, x + bw + 8]]) {
+    px(ctx, sx, top + 6, 8, bh - 4, XMAS.redD);
+    px(ctx, outer, top + 6 + Math.floor((bh - 4) / 2) - 2, 2, 4, C.page); // 꼬리 끝 V 홈
+  }
+  px(ctx, x, top, bw, bh, XMAS.red);
+  px(ctx, x, top, bw, 2, '#ff7b84'); px(ctx, x, top + bh - 2, bw, 2, XMAS.redD);
+  // 금색 테두리 점
+  for (let i = 4; i < bw - 3; i += 6) { px(ctx, x + i, top + 3, 2, 1, XMAS.gold); px(ctx, x + i, top + bh - 4, 2, 1, XMAS.gold); }
+  const big = label === 'D-DAY';
+  const col = big && Math.floor(now / 300) % 2 ? '#ffffff' : XMAS.gold;
+  drawPixelText(ctx, label, Math.round(cx - tw / 2) + 1, top + 6, k, XMAS.redD);
+  drawPixelText(ctx, label, Math.round(cx - tw / 2), top + 5, k, col);
+  // 날짜
+  const sub = [...new Set([EXHIBIT.from, EXHIBIT.until].filter(Boolean).map((d) => d.slice(5).replace('-', '.')))].join(' - ');
+  const sw = textWidth(sub, 1);
+  drawPixelText(ctx, sub, Math.round(cx - sw / 2), top + bh + 4, 1, C.navy);
+  // 반짝이 별 몇 개
+  for (let i = 0; i < 6; i++) {
+    if ((Math.floor(now / 250) + i * 2) % 5) continue;
+    const sx = x - 14 + ((i * 53) % (bw + 28)), sy = top - 4 + ((i * 29) % (bh + 10));
+    px(ctx, sx, sy, 1, 3, XMAS.gold); px(ctx, sx - 1, sy + 1, 3, 1, XMAS.gold);
+  }
+}
+
+// 벽 위 전구 줄 (깜빡임)
+function drawWallLights(ctx, now) {
+  const y0 = 43, x0 = GX + 2, x1 = GX + COLS * CELL - 2;
+  for (let x = x0, i = 0; x < x1; x += 12, i++) {
+    const sag = Math.round(Math.sin(((x - x0) % 48) / 48 * Math.PI) * 3);
+    px(ctx, x, y0 + sag, 12, 1, '#55607f');
+    const on = (Math.floor(now / 450) + i) % 2 === 0;
+    const c = BULBS[i % 5];
+    px(ctx, x + 5, y0 + sag + 1, 3, 3, on ? c : shade(c, -0.45));
+    if (on) { ctx.globalAlpha = 0.3; px(ctx, x + 4, y0 + sag, 5, 5, c); ctx.globalAlpha = 1; }
+  }
+}
+
+// 창밖에 내리는 눈
+const WINDOWS = [[GX + 44, 48, 120, 30], [GX + 478, 48, 64, 30]];
+function drawWindowSnow(ctx, now) {
+  for (const [wx, wy, ww, wh] of WINDOWS) {
+    for (let i = 0; i < Math.round(ww / 5); i++) {
+      const sp = 0.008 + ((i * 37) % 10) / 1500;
+      const x = wx + ((i * 73 + Math.floor(Math.sin(now / 900 + i) * 3)) % ww + ww) % ww;
+      const y = wy + ((i * 41 + now * sp) % wh);
+      px(ctx, Math.round(x), Math.round(y), 1, 1, '#ffffff');
+    }
+  }
+}
+
+function paintStatic(ctx, sky) {
   ctx.clearRect(0, 0, W, H);
   // 제목 표시줄
   px(ctx, 0, 0, W, 14, C.blue);
@@ -231,9 +373,9 @@ function paintStatic(ctx, sky, dday) {
   px(ctx, GX, 40, COLS * CELL, 48, C.wall);
   px(ctx, GX, 40, COLS * CELL, 2, C.wallL);
   px(ctx, GX, 84, COLS * CELL, 4, C.wallD);
-  drawWindow(ctx, GX + 44, 48, 120, 30, sky);
+  drawWindow(ctx, ...WINDOWS[0], sky);
   drawBinders(ctx, GX + 188, 52);
-  drawWindow(ctx, GX + 478, 48, 64, 30, sky);
+  drawWindow(ctx, ...WINDOWS[1], sky);
   // 시계
   px(ctx, GX + 284, 50, 14, 14, '#ffffff'); px(ctx, GX + 285, 51, 12, 12, '#f3f6fc');
   px(ctx, GX + 290, 53, 2, 5, C.navy); px(ctx, GX + 291, 57, 4, 1, C.navy);
@@ -254,7 +396,6 @@ function paintStatic(ctx, sky, dday) {
   px(ctx, GX + DOOR.cx * CELL - 4, GY, 40, 6, '#9db7f5');
   px(ctx, GX + DOOR.cx * CELL - 3, GY + 1, 38, 4, '#b9ccf8');
 
-  drawDday(ctx, dday);
   for (const g of GOALS) dashedSquare(ctx, GX + g.cx * CELL, GY + g.cy * CELL, g.c);
   // 페이지 아래 여백
   px(ctx, GX, GY + ROWS * CELL, COLS * CELL, 8, C.page);
@@ -288,6 +429,7 @@ export class Scene {
     this.bg = document.createElement('canvas'); this.bg.width = W; this.bg.height = H;
     this.skyKey = '';
     this.blocked = new Set(PROPS.map((p) => `${p.cx},${p.cy}`));
+    this.dday = '';
     this.actors = new Map();   // id -> actor (화면에 있는 사람)
     this.entries = new Map();  // id -> entry (전체)
     this.queue = [];           // 화면 밖에서 출근을 기다리는 id
@@ -307,6 +449,9 @@ export class Scene {
 
   resize() {
     const vw = this.host.clientWidth || window.innerWidth, vh = this.host.clientHeight || window.innerHeight;
+    // 화면이 세로로 길면 사무실도 세로로 늘려서(바닥 줄 추가) 위아래 여백 없이 채워요
+    const wantH = Math.max(H_MIN, Math.min(H_MAX, Math.round(W * vh / vw)));
+    if (wantH !== H) this.setHeight(wantH);
     // 남는 여백 없이 들어갈 수 있는 만큼 최대로 키워요
     const s = Math.min(vw / W, vh / H);
     this.scale = s;
@@ -318,7 +463,23 @@ export class Scene {
       el.style.left = Math.round((vw - cw) / 2) + 'px'; el.style.top = Math.round((vh - ch) / 2) + 'px';
     }
     this.layer.style.setProperty('--s', s);
+    this.layer.style.setProperty('--lh', H);
     this.pxRatio = ratio;
+  }
+
+  setHeight(h) {
+    H = h;
+    ROWS = Math.floor((H - GY - 18) / CELL);
+    PROPS = buildProps();
+    this.blocked = new Set(PROPS.map((p) => `${p.cx},${p.cy}`));
+    this.bg.height = H;
+    this.skyKey = ''; // 배경 다시 그리기
+    // 바뀐 바닥 밖이나 막힌 칸에 서 있던 사람은 빈 칸으로 옮겨요
+    for (const a of this.actors.values()) {
+      if (a.cy < ROWS && !this.blocked.has(`${a.cx},${a.cy}`)) continue;
+      const f = this.freeCell();
+      if (f) { [a.cx, a.cy] = f; a.tx = a.cx; a.ty = a.cy; a.x = a.cx; a.y = a.cy; a.path = []; a.moving = false; if (a.state === 'walk') a.state = 'idle'; }
+    }
   }
 
   // ----- 데이터 -----
@@ -490,8 +651,9 @@ export class Scene {
   // ----- 메인 루프 -----
   loop(now) {
     requestAnimationFrame((t) => this.loop(t));
-    const d = new Date(), sky = skyFor(d), dday = ddayLabel(d), key = sky.key + '|' + dday;
-    if (key !== this.skyKey) { this.skyKey = key; paintStatic(this.bg.getContext('2d'), sky, dday); }
+    const d = new Date(), sky = skyFor(d);
+    this.dday = ddayLabel(d);
+    if (sky.key !== this.skyKey) { this.skyKey = sky.key; paintStatic(this.bg.getContext('2d'), sky); }
     this.update(now);
     this.draw(now);
   }
@@ -593,6 +755,8 @@ export class Scene {
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this.bg, 0, 0);
+    drawWindowSnow(ctx, now);
+    drawWallLights(ctx, now);
 
     // 모두 함께 한 칸: 바닥 화살표 표시
     if (this.groupDir && now < this.groupUntil) {
@@ -610,7 +774,12 @@ export class Scene {
 
     // 깊이 순서대로 (아래쪽이 앞)
     const items = [];
-    for (const p of PROPS) items.push({ y: p.cy + 0.01, draw: () => drawProp(ctx, p) });
+    for (const p of PROPS) {
+      if (p.kind === 'block') continue;
+      if (p.kind === 'tree') items.push({ y: p.cy + 0.01, draw: () => drawTree(ctx, now) });
+      else if (p.kind === 'banner') items.push({ y: p.cy + 0.01, draw: () => drawBanner(ctx, this.dday, now) });
+      else items.push({ y: p.cy + 0.01, draw: () => drawProp(ctx, p) });
+    }
     for (const a of this.actors.values()) items.push({ y: a.y, draw: () => this.drawActor(ctx, a, now) });
     items.sort((p, q) => p.y - q.y);
     for (const it of items) it.draw();
@@ -663,4 +832,4 @@ export class Scene {
   }
 }
 
-export const LAYOUT = { W, H, GX, GY, CELL, COLS, ROWS };
+export const LAYOUT = { W, get H() { return H; }, GX, GY, CELL, COLS, get ROWS() { return ROWS; } };
